@@ -55,6 +55,8 @@ async function refreshCapabilityTree() {
   try {
     const tree = await buildCapabilityTree();
     els.tree.textContent = JSON.stringify(tree, null, 2);
+    els.webmcpStatus.textContent = `${tree.liveWebMCPTools.length} WebMCP tools live`;
+    els.webmcpStatus.className = 'status status-ready';
     return tree;
   } catch (error) {
     console.error('Capability tree refresh failed', error);
@@ -108,9 +110,7 @@ if ('modelContext' in document && document.modelContext) {
     });
     await registerAssetWebMCPTools(assetApi);
 
-    els.webmcpStatus.textContent = '6 WebMCP tools ready';
-    els.webmcpStatus.className = 'status status-ready';
-    addHistory('Global discovery tools and Asset Inspector tools registered.');
+    addHistory('Global discovery and Asset Inspector WebMCP tools registered.');
 
     document.modelContext.addEventListener?.('toolchange', () => {
       refreshCapabilityTree().catch(() => {});
