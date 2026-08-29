@@ -26,6 +26,10 @@ persona que usa la interfaz.
   credenciales.
 - Datos de demo solamente; no incorporar casos ni datos de clientes reales.
 - Acción, protocolo o estado desconocido => fail closed.
+- Una tool observada mediante `getTools()` no concede autoridad ni se invoca si
+  no forma parte de un contrato interno declarado.
+- Las tools contextuales se registran y retiran sólo con contratos internos y
+  `AbortSignal`; no crear una megatool de control genérico del DOM.
 
 ## Verificación
 

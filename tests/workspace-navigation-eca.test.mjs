@@ -23,7 +23,8 @@ test('ECA: case tree exposes product regions, page tools and human-only controls
   const boundary = tree.semanticTree.find((node) => node.id === 'approval-boundary');
   assert.deepEqual(boundary.humanControls, ['Approve', 'Reject']);
   assert.deepEqual(boundary.actions, ['request_sensitive_action', 'apply_approved_action']);
-  assert.equal(tree.exposedTools.includes('approve_sensitive_action'), false);
+  assert.equal(tree.declaredTools.includes('approve_sensitive_action'), false);
+  assert.equal(tree.forms.some((form) => form.id === 'sensitive-action-form' && form.humanApprovalRequired), true);
   assert.match(tree.scope, /not a raw DOM/i);
 });
 
@@ -69,4 +70,25 @@ test('ECA: every page receives exactly three global discovery and navigation too
 
   assert.deepEqual(names, ['list_workspace_pages', 'read_page_tree', 'open_workspace_page']);
   assert.deepEqual(registered.map((tool) => tool.name), names);
+});
+
+test('ECA: current-page tree reports declared and actually observed WebMCP tools separately', async () => {
+  const registered = [];
+  const modelContext = {
+    registerTool: async (tool) => registered.push(tool),
+    getTools: async () => [...registered, { name: 'foreign_same_origin_tool' }]
+  };
+  await registerWorkspaceNavigationTools({
+    pageId: 'operator_case',
+    locationRef: { assign: () => {} },
+    getRuntimeSurface: () => ({ capabilityRevision: 7, dynamicToolNames: ['read_selected_component'] }),
+    modelContext
+  });
+  const readTree = registered.find((tool) => tool.name === 'read_page_tree');
+  const result = JSON.parse(await readTree.execute({}));
+
+  assert.equal(result.liveCapabilities.observation, 'observed');
+  assert.equal(result.liveCapabilities.accessibleToolNames.includes('read_page_tree'), true);
+  assert.deepEqual(result.liveCapabilities.unexpectedAccessibleToolNames, ['foreign_same_origin_tool']);
+  assert.equal(result.runtimeSurface.capabilityRevision, 7);
 });

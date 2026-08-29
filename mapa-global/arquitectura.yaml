@@ -19,7 +19,7 @@
       "method": "browser module load",
       "entrada": "entradas/app.js",
       "controlador": "logica/operator-workspace.js",
-      "logica": ["logica/approval-boundary.js", "logica/page-manifest.js"],
+      "logica": ["logica/approval-boundary.js", "logica/page-manifest.js", "logica/case-component-context.js", "logica/live-capability-inspector.js"],
       "contrato_entrada": "contratos/webmcp-tool-contracts.js",
       "contrato_salida": "contratos/tool-errors.js",
       "salida": "salidas/operator-desk-renderer.js"
@@ -34,12 +34,17 @@
     {
       "name": "ToolErrors",
       "file": "contratos/tool-errors.js",
-      "used_by": ["logica/operator-workspace.js", "logica/approval-boundary.js"]
+      "used_by": ["contratos/workspace-page-contracts.js", "entradas/webmcp-tool-registry.js", "entradas/workspace-navigation-registry.js", "entradas/case-agent-surface-registry.js", "logica/operator-workspace.js", "logica/approval-boundary.js", "logica/case-component-context.js"]
     },
     {
       "name": "WorkspacePageContracts",
       "file": "contratos/workspace-page-contracts.js",
       "used_by": ["entradas/directory-app.js", "entradas/workspace-navigation-registry.js", "logica/page-manifest.js"]
+    },
+    {
+      "name": "CaseAgentSurfaceContracts",
+      "file": "contratos/case-agent-surface-contracts.js",
+      "used_by": ["entradas/case-agent-surface-registry.js", "logica/case-component-context.js"]
     }
   ],
   "modules": [
@@ -47,7 +52,7 @@
       "name": "page-bootstrap",
       "type": "Entrada",
       "file": "entradas/app.js",
-      "depends_on": ["entradas/webmcp-tool-registry.js", "entradas/workspace-navigation-registry.js", "logica/operator-workspace.js", "salidas/operator-desk-renderer.js"]
+      "depends_on": ["entradas/webmcp-tool-registry.js", "entradas/workspace-navigation-registry.js", "entradas/case-agent-surface-registry.js", "logica/operator-workspace.js", "salidas/operator-desk-renderer.js", "salidas/component-surface-renderer.js"]
     },
     {
       "name": "directory-bootstrap",
@@ -65,7 +70,19 @@
       "name": "workspace-navigation-registry",
       "type": "Entrada",
       "file": "entradas/workspace-navigation-registry.js",
-      "depends_on": ["contratos/workspace-page-contracts.js", "contratos/tool-errors.js", "logica/page-manifest.js", "salidas/tool-result-formatter.js"]
+      "depends_on": ["contratos/workspace-page-contracts.js", "contratos/tool-errors.js", "logica/page-manifest.js", "logica/live-capability-inspector.js", "salidas/tool-result-formatter.js"]
+    },
+    {
+      "name": "case-agent-surface-registry",
+      "type": "Entrada",
+      "file": "entradas/case-agent-surface-registry.js",
+      "depends_on": ["contratos/case-agent-surface-contracts.js", "contratos/tool-errors.js", "entradas/webmcp-contract-registrar.js", "logica/case-component-context.js"]
+    },
+    {
+      "name": "webmcp-contract-registrar",
+      "type": "Entrada",
+      "file": "entradas/webmcp-contract-registrar.js",
+      "depends_on": ["salidas/tool-result-formatter.js"]
     },
     {
       "name": "approval-boundary",
@@ -77,7 +94,7 @@
       "name": "operator-workspace",
       "type": "Lógica",
       "file": "logica/operator-workspace.js",
-      "depends_on": ["logica/approval-boundary.js", "contratos/tool-errors.js"]
+      "depends_on": ["logica/approval-boundary.js", "logica/workspace-input-validation.js"]
     },
     {
       "name": "page-manifest",
@@ -86,15 +103,51 @@
       "depends_on": ["contratos/workspace-page-contracts.js"]
     },
     {
+      "name": "case-component-context",
+      "type": "Lógica",
+      "file": "logica/case-component-context.js",
+      "depends_on": ["contratos/case-agent-surface-contracts.js", "contratos/tool-errors.js"]
+    },
+    {
+      "name": "live-capability-inspector",
+      "type": "Lógica",
+      "file": "logica/live-capability-inspector.js",
+      "depends_on": []
+    },
+    {
+      "name": "workspace-input-validation",
+      "type": "Lógica",
+      "file": "logica/workspace-input-validation.js",
+      "depends_on": ["contratos/tool-errors.js"]
+    },
+    {
       "name": "operator-desk-renderer",
       "type": "Salida",
       "file": "salidas/operator-desk-renderer.js",
-      "depends_on": []
+      "depends_on": ["salidas/approval-card-view.js", "salidas/history-list-view.js"]
     },
     {
       "name": "tool-result-formatter",
       "type": "Salida",
       "file": "salidas/tool-result-formatter.js",
+      "depends_on": []
+    },
+    {
+      "name": "component-surface-renderer",
+      "type": "Salida",
+      "file": "salidas/component-surface-renderer.js",
+      "depends_on": []
+    },
+    {
+      "name": "approval-card-view",
+      "type": "Salida",
+      "file": "salidas/approval-card-view.js",
+      "depends_on": []
+    },
+    {
+      "name": "history-list-view",
+      "type": "Salida",
+      "file": "salidas/history-list-view.js",
       "depends_on": []
     },
     {
@@ -114,6 +167,12 @@
       "type": "Contrato",
       "file": "contratos/workspace-page-contracts.js",
       "depends_on": ["contratos/tool-errors.js"]
+    },
+    {
+      "name": "case-agent-surface-contracts",
+      "type": "Contrato",
+      "file": "contratos/case-agent-surface-contracts.js",
+      "depends_on": []
     }
   ]
 }

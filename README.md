@@ -32,12 +32,17 @@ Each page exposes the same three global WebMCP tools:
 | Tool | Purpose | Safety boundary |
 | --- | --- | --- |
 | `list_workspace_pages` | Lists the declared workspace pages and their tools | Fixed same-origin manifest only |
-| `read_page_tree` | Returns a curated semantic skeleton of a declared page | Not a raw DOM, selector, form-value, or hidden-state dump |
+| `read_page_tree` | Returns a curated semantic skeleton, declared forms and current capability state | Not a raw DOM, selector, form-value, or hidden-state dump |
 | `open_workspace_page` | Opens a declared page by exact `page_id` | Fixed relative local route; no URL, query, fragment, or external origin |
 
+The tree separates the application's **declared** tools from names observed by
+`document.modelContext.getTools()` on the active document. Observation never
+grants permission: unknown observed names remain informational and cannot be
+invoked through this application.
+
 The initial directory page exposes those three tools. The Operator Desk page
-exposes them plus the five case tools below. This follows the page lifecycle:
-the browser rediscovers the tools registered by the destination page after
+exposes them plus the case tools below. This follows the page lifecycle: the
+browser rediscovers the tools registered by the destination page after
 same-origin navigation.
 
 ## Operator Desk tools
@@ -49,6 +54,24 @@ same-origin navigation.
 | `prepare_customer_update` | Prepare a draft for human review | Never sends |
 | `request_sensitive_action` | Create an approval proposal | Never executes |
 | `apply_approved_action` | Apply an approved proposal | Requires prior human approval; single-use |
+
+## Contextual component tools
+
+The Operator Desk also exposes a bounded component context. An agent can list
+the two fictional components and select exactly one. Selection activates two
+extra tools for that known context; clearing the selection unregisters them
+with `AbortSignal`.
+
+| Tool | Availability | Purpose |
+| --- | --- | --- |
+| `list_case_components` | Always on the Operator Desk | Lists declared demo components |
+| `select_case_component` | Always on the Operator Desk | Selects a closed component ID |
+| `clear_case_component_selection` | Always on the Operator Desk | Removes context and its local draft |
+| `read_selected_component` | Only after valid selection | Reads the selected component |
+| `prepare_component_diagnostic` | Only after valid selection | Creates a bounded, unsent local diagnostic |
+
+`toolchange` only advances a visible capability revision. It never grants
+authority, runs an observed tool, sends the diagnostic, or changes approval.
 
 ## Human approval boundary
 
@@ -77,15 +100,18 @@ There is intentionally **no WebMCP tool that can approve a proposal**.
 1. On the directory, ask the agent to call `list_workspace_pages` and
    `read_page_tree`.
 2. Ask it to call `open_workspace_page` with `page_id: "operator_case"`.
-3. On the destination page, the agent discovers the case tools, then reads the
-   case with `read_case_context`.
-4. Ask it to prepare a diagnostic checklist with `create_work_plan`.
-5. Ask it to prepare a customer update with `prepare_customer_update`.
-6. Ask it to propose a sensitive action with `request_sensitive_action`.
-7. Try to apply it before approval — the page blocks the action.
-8. Human clicks **Approve** in the page.
-9. Agent calls `apply_approved_action` using the proposal ID.
-10. The page records execution and consumes the approval; a replay is blocked.
+3. On the destination page, the agent reads the case with `read_case_context`.
+4. It calls `list_case_components`, selects `condenser_fan`, then re-reads the
+   tree to observe the contextual form and the two newly declared tools.
+5. Ask it to prepare a bounded component diagnostic; it remains local and
+   unsent. Clear the selection to demonstrate contextual tools disappearing.
+6. Ask it to prepare a diagnostic checklist with `create_work_plan`.
+7. Ask it to prepare a customer update with `prepare_customer_update`.
+8. Ask it to propose a sensitive action with `request_sensitive_action`.
+9. Try to apply it before approval — the page blocks the action.
+10. Human clicks **Approve** in the page.
+11. Agent calls `apply_approved_action` using the proposal ID.
+12. The page records execution and consumes the approval; a replay is blocked.
 
 That sequence demonstrates a shared human-agent workspace plus a real action boundary in under three minutes.
 
@@ -124,6 +150,7 @@ See [`docs/HACKATHON_SCOPE.md`](./docs/HACKATHON_SCOPE.md).
 
 - No arbitrary URL fetching.
 - No arbitrary DOM controls, selectors, raw page-tree export or navigation URLs.
+- Live WebMCP observation does not create authority or invoke unrecognised tools.
 - Every page, semantic node and route is declared in a local immutable manifest.
 - No shell or filesystem access.
 - No credentials are stored in the repository.

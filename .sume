@@ -4,6 +4,7 @@
   "auto_update_arquitectura": true,
   "require_change_log": true,
   "architecture_map_guard": true,
+  "max_source_lines": 130,
   "map_guard": {
     "tracked_roots": ["entradas", "logica", "salidas", "contratos"],
     "source_extensions": [".js"],

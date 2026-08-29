@@ -15,7 +15,7 @@ Salidas:
 */
 
 import { ApprovalBoundary } from './approval-boundary.js';
-import { ToolContractError, ToolErrorCode } from '../contratos/tool-errors.js';
+import { validateCustomerUpdate, validateWorkPlan } from './workspace-input-validation.js';
 
 export const DEMO_CASE = Object.freeze({
   id: 'SRV-2047',
@@ -29,29 +29,6 @@ export const DEMO_CASE = Object.freeze({
 
 function clone(value) {
   return structuredClone(value);
-}
-
-function assertBoundedText(value, code, label, maxLength) {
-  if (typeof value !== 'string') {
-    throw new ToolContractError(code, `${label} must be text.`);
-  }
-  const clean = value.trim();
-  if (!clean || clean.length > maxLength) {
-    throw new ToolContractError(code, `${label} must contain 1-${maxLength} characters.`);
-  }
-  return clean;
-}
-
-function validateSteps(steps) {
-  if (!Array.isArray(steps) || steps.length < 1 || steps.length > 8) {
-    throw new ToolContractError(ToolErrorCode.INVALID_WORK_PLAN, 'A work plan requires 1-8 steps.');
-  }
-  return steps.map((step, index) => assertBoundedText(
-    step,
-    ToolErrorCode.INVALID_WORK_PLAN,
-    `Step ${index + 1}`,
-    240
-  ));
 }
 
 export class OperatorWorkspace {
@@ -84,19 +61,14 @@ export class OperatorWorkspace {
   }
 
   createWorkPlan(steps) {
-    this.workPlan = validateSteps(steps);
+    this.workPlan = validateWorkPlan(steps);
     this.#addHistory(`Agent prepared a ${this.workPlan.length}-step work plan.`);
     this.#notify();
     return { ok: true, steps: [...this.workPlan] };
   }
 
   prepareCustomerUpdate(message) {
-    this.customerUpdate = assertBoundedText(
-      message,
-      ToolErrorCode.INVALID_CUSTOMER_UPDATE,
-      'Customer update',
-      1500
-    );
+    this.customerUpdate = validateCustomerUpdate(message);
     this.#addHistory('Agent prepared a customer update draft. No message was sent.');
     this.#notify();
     return { ok: true, draft: this.customerUpdate, sent: false };

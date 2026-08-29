@@ -20,6 +20,7 @@ import {
   listWorkspacePages
 } from '../contratos/workspace-page-contracts.js';
 import { ToolContractError, ToolErrorCode } from '../contratos/tool-errors.js';
+import { inspectLiveCapabilities } from '../logica/live-capability-inspector.js';
 import { readPageTree, readWorkspaceDirectory } from '../logica/page-manifest.js';
 import { formatToolResult } from '../salidas/tool-result-formatter.js';
 
@@ -30,14 +31,29 @@ function assertLocalPagePath(page) {
   return page.path;
 }
 
-export async function registerWorkspaceNavigationTools({ pageId, locationRef, modelContext = globalThis.document?.modelContext } = {}) {
+export async function registerWorkspaceNavigationTools({ pageId, locationRef, getRuntimeSurface = () => ({}), modelContext = globalThis.document?.modelContext } = {}) {
   if (!modelContext || typeof modelContext.registerTool !== 'function') {
     throw new ToolContractError(ToolErrorCode.WEBMCP_UNAVAILABLE, 'WebMCP is unavailable in this browser.');
   }
   getWorkspacePage(pageId);
   const navigationApi = {
     listPages: () => readWorkspaceDirectory(),
-    readPageTree: (requestedPageId = pageId) => readPageTree(requestedPageId),
+    readPageTree: async (requestedPageId = pageId) => {
+      const isCurrentPage = requestedPageId === pageId;
+      const tree = readPageTree(requestedPageId, isCurrentPage ? getRuntimeSurface() : {});
+      return {
+        ...tree,
+        liveCapabilities: isCurrentPage
+          ? await inspectLiveCapabilities({ modelContext, declaredToolNames: tree.declaredTools, runtimeSurface: tree.runtimeSurface })
+          : {
+              observation: 'not_active_page',
+              declaredToolNames: tree.declaredTools,
+              accessibleToolNames: [],
+              unexpectedAccessibleToolNames: [],
+              runtimeSurface: tree.runtimeSurface
+            }
+      };
+    },
     openPage: (requestedPageId) => {
       const path = assertLocalPagePath(getWorkspacePage(requestedPageId));
       if (!locationRef || typeof locationRef.assign !== 'function') {

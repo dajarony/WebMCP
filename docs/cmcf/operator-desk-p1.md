@@ -21,7 +21,7 @@ MCP, OAuth, herramientas remotas, filesystem y datos de producción.
 | --- | --- | --- | --- |
 | Registro WebMCP | Exponer tools del caso activo | No | `registerWebMCPTools(api)` |
 | Navegación Workspace | Exponer páginas y árbol semántico curado | No | `registerWorkspaceNavigationTools(pageId)` |
-| Manifiesto de páginas | Declarar páginas, rutas y nodos visibles | No | `getPageManifest(pageId)` |
+| Manifiesto de páginas | Declarar páginas, rutas y nodos visibles | No | `readPageTree(pageId)` |
 | Workspace | Mantener caso, plan, borrador e historial | Sí | `read`, `plan`, `draft`, `propose`, `apply` |
 | Approval Boundary | Decidir transición de propuesta | Sí | `request`, `approve`, `reject`, `apply` |
 | Renderizador | Reflejar estado seguro en DOM | No | `render(state)` |

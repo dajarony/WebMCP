@@ -20,6 +20,36 @@
 
 **Author:** Codex con metodologías Dajarony, autorizado por el propietario.
 
+## 2026-08-29 — superficie WebMCP viva y contextual P2
+
+**Files affected:**
+- `contratos/case-agent-surface-contracts.js`, `contratos/faser/`,
+  `contratos/scp/`, `contratos/workspace-page-contracts.js`
+- `entradas/case-agent-surface-registry.js`,
+  `entradas/webmcp-contract-registrar.js`, `entradas/app.js`
+- `logica/case-component-context.js`, `logica/live-capability-inspector.js`,
+  `logica/page-manifest.js`
+- `salidas/component-surface-renderer.js`, `case.html`, `styles.css`, `tests/`
+
+**Motive:**
+- Hacer visible para el agente el esqueleto declarado de la página, sus
+  formularios y el ciclo de capacidades contextuales sin dar control genérico
+  sobre el DOM o una herramienta de ejecución arbitraria.
+
+**Impact:**
+- `read_page_tree` separa contratos declarados de nombres accesibles observados
+  en el documento actual.
+- Dos tools de diagnóstico se registran únicamente tras seleccionar un
+  componente ficticio cerrado y se retiran mediante `AbortSignal` al limpiar.
+- Las observaciones vivas no se convierten en autoridad ni se invocan.
+- Se divide el render/registro para que todo módulo SUME quede en 130 líneas o
+  menos; la ECA de arquitectura impide regresiones de tamaño, mapa o DOCBLOCK.
+- Se corrige el constructor del renderizador contextual para que el arranque de
+  la página no falle al usar el `document` del navegador por defecto; la ECA
+  cubre el bootstrap y el render vacío.
+
+**Author:** Codex con metodologías Dajarony, autorizado por el propietario.
+
 ## 2026-08-29 — manifiesto semántico WebMCP multipágina P1
 
 **Files affected:**

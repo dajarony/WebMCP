@@ -21,7 +21,25 @@ Expected WebMCP use:
 Visible result: the agent describes the declared case regions and crosses only
 to the declared local page. It cannot use a raw URL or operate arbitrary DOM.
 
-## Scene 1 — Agent understands the live case
+## Scene 1 — Agent discovers bounded contextual capability
+
+**Prompt**
+
+> List the case components, select the condenser fan, and re-read the page
+> tree. Prepare a short diagnostic observation. Do not send or execute anything.
+
+Expected WebMCP use:
+
+1. `list_case_components`
+2. `select_case_component(component_id="condenser_fan")`
+3. `read_page_tree(page_id="operator_case")`
+4. `prepare_component_diagnostic`
+
+Visible result: the page shows the selected component, a local unsent draft,
+and a new capability revision. The tree reports the contextual form and the
+two contextual tools separately from any tools observed live by WebMCP.
+
+## Scene 2 — Agent understands the live case
 
 **Prompt**
 
@@ -34,7 +52,7 @@ Expected WebMCP use:
 
 Visible result: the checklist appears in the same page the human is viewing.
 
-## Scene 2 — Agent prepares, human retains communication control
+## Scene 3 — Agent prepares, human retains communication control
 
 **Prompt**
 
@@ -47,7 +65,7 @@ Expected WebMCP use:
 
 Visible result: a draft appears in the shared page with the explicit note that it has not been sent.
 
-## Scene 3 — Sensitive action boundary
+## Scene 4 — Sensitive action boundary
 
 **Prompt**
 

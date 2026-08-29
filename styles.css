@@ -154,6 +154,7 @@ h2 {
 
 .case-panel { grid-row: span 2; }
 .history-panel { grid-column: 1 / -1; }
+.component-panel { grid-column: 1 / -1; }
 
 .panel-heading {
   display: flex;

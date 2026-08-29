@@ -41,7 +41,10 @@ const PAGES = Object.freeze([
       'create_work_plan',
       'prepare_customer_update',
       'request_sensitive_action',
-      'apply_approved_action'
+      'apply_approved_action',
+      'list_case_components',
+      'select_case_component',
+      'clear_case_component_selection'
     ])
   })
 ]);
@@ -73,7 +76,7 @@ export function createWorkspaceNavigationToolContracts(navigationApi) {
     },
     {
       name: 'read_page_tree',
-      description: 'Read the application-curated semantic tree for a declared workspace page. This is not a raw DOM dump.',
+      description: 'Read the application-curated semantic tree, declared forms and current live capability state for a declared workspace page. This is not a raw DOM dump.',
       inputSchema: {
         type: 'object',
         properties: { page_id: { type: 'string', enum: PAGES.map((page) => page.id) } },

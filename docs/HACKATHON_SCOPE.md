@@ -10,8 +10,10 @@ Its challenge-specific work includes:
 - the browser-based shared service-case interface;
 - a multipage workspace directory with a same-origin page manifest;
 - an application-curated semantic tree per declared page;
+- declared forms plus an explicitly separate live WebMCP capability observation;
 - bounded page discovery and page-id navigation tools;
 - WebMCP tool registration with `document.modelContext.registerTool()`;
+- bounded contextual component tools whose lifecycle uses `AbortSignal`;
 - schemas and descriptions for the five site tools;
 - shared human-agent page state;
 - work-plan and customer-update preparation flows;
@@ -44,6 +46,10 @@ The agent is never given a WebMCP tool that changes a proposal from `pending` to
 The agent is also never given a raw DOM, selector, form-control, hidden-state
 or arbitrary-URL primitive. It can discover only product regions and page tools
 selected by the application, and can navigate only to a declared local page.
+
+An observed live WebMCP tool name is not an authority grant. The application
+never invokes an unknown observed tool and only registers its own closed
+contracts.
 
 ## Demo data
 

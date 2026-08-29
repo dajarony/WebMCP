@@ -40,7 +40,8 @@ for (const page of listWorkspacePages()) {
 try {
   const tools = await registerWorkspaceNavigationTools({
     pageId: 'workspace_directory',
-    locationRef: window.location
+    locationRef: window.location,
+    modelContext: document.modelContext
   });
   status.textContent = `${tools.length} global WebMCP tools ready`;
   status.className = 'status status-ready';

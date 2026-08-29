@@ -15,7 +15,9 @@ Salidas:
 */
 
 import { OperatorWorkspace } from '../logica/operator-workspace.js';
+import { CaseAgentSurfaceRegistry } from './case-agent-surface-registry.js';
 import { OperatorDeskRenderer } from '../salidas/operator-desk-renderer.js';
+import { ComponentSurfaceRenderer } from '../salidas/component-surface-renderer.js';
 import { registerWebMCPTools } from './webmcp-tool-registry.js';
 import { registerWorkspaceNavigationTools } from './workspace-navigation-registry.js';
 
@@ -24,9 +26,13 @@ const renderer = new OperatorDeskRenderer({
   onApprove: (proposalId) => workspace.approveFromHuman(proposalId),
   onReject: (proposalId) => workspace.rejectFromHuman(proposalId)
 });
+const componentRenderer = new ComponentSurfaceRenderer();
+const caseAgentSurface = new CaseAgentSurfaceRegistry({ modelContext: document.modelContext });
 
 workspace.subscribe((snapshot) => renderer.render(snapshot));
 renderer.render(workspace.snapshot());
+componentRenderer.render({ component: caseAgentSurface.componentSnapshot(), runtimeSurface: caseAgentSurface.runtimeSurface() });
+caseAgentSurface.subscribe((update) => componentRenderer.render(update));
 
 const operatorApi = {
   readCaseContext: () => workspace.readCaseContext(),
@@ -39,10 +45,13 @@ const operatorApi = {
 try {
   const navigationToolNames = await registerWorkspaceNavigationTools({
     pageId: 'operator_case',
-    locationRef: window.location
+    locationRef: window.location,
+    getRuntimeSurface: () => caseAgentSurface.runtimeSurface(),
+    modelContext: document.modelContext
   });
   const caseToolNames = await registerWebMCPTools(operatorApi);
-  const toolNames = [...navigationToolNames, ...caseToolNames];
+  const componentToolNames = await caseAgentSurface.register();
+  const toolNames = [...navigationToolNames, ...caseToolNames, ...componentToolNames];
   renderer.setWebMcpStatus('WebMCP tools ready', 'status status-ready');
   workspace.history.unshift({ at: Date.now(), text: `${toolNames.length} WebMCP tools registered for the active page.` });
   renderer.render(workspace.snapshot());

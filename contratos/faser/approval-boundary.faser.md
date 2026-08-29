@@ -1,6 +1,7 @@
 ===============================================================
 Componente: Approval Boundary
 Tipo: Módulo de lógica
+Estado: Draft
 Versión: 0.1.0
 Entradas: action, reason, proposal_id y decisión humana visible
 Acciones: proponer, aprobar, rechazar y aplicar una vez

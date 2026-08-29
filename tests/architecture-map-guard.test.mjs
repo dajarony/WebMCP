@@ -28,5 +28,9 @@ test('ECA: SUME map covers each configured source module exactly once with DOCBL
   for (const moduleFile of mapped) {
     const source = readFileSync(resolve(projectRoot, moduleFile), 'utf8');
     assert.match(source, /^\/\*\r?\nSUME DOCBLOCK/);
+    assert.ok(
+      source.trimEnd().split(/\r?\n/).length <= config.max_source_lines,
+      `${moduleFile} exceeds the SUME ${config.max_source_lines}-line module limit`
+    );
   }
 });
