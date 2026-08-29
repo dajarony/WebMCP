@@ -6,7 +6,7 @@ import {
   publicSiteManifest,
   resolveCapabilityPage
 } from '../site-capabilities.js';
-import { composeCapabilityTree } from '../capability-tree.js';
+import { buildCapabilityTree, composeCapabilityTree } from '../capability-tree.js';
 
 test('resolves GitHub Pages style paths to the correct page', () => {
   assert.equal(currentPageDescriptor('/WebMCP/index.html').id, 'case-workspace');
@@ -27,9 +27,7 @@ test('site manifest exposes stable global capabilities and both pages', () => {
 test('capability tree distinguishes live global and page-local tools', () => {
   const tree = composeCapabilityTree({
     pathname: '/WebMCP/asset.html',
-    skeleton: [
-      { id: 'inspection-note-form', kind: 'review-form', humanOnly: false }
-    ],
+    skeleton: [{ id: 'inspection-note-form', kind: 'review-form', humanOnly: false }],
     liveTools: [
       { name: 'describe_site_capabilities' },
       { name: 'read_page_capability_tree' },
@@ -135,4 +133,24 @@ test('unexpected observed WebMCP tools remain informational rather than declared
 test('page ids resolve to safe declared navigation targets only', () => {
   assert.equal(resolveCapabilityPage('asset-inspector').href, './asset.html');
   assert.equal(resolveCapabilityPage('https://evil.example'), null);
+});
+
+test('live inspection failure keeps the declared capability tree available', async () => {
+  const root = {
+    querySelectorAll: () => [],
+    modelContext: {
+      getTools: async () => { throw new Error('browser inspection unavailable'); }
+    }
+  };
+
+  const tree = await buildCapabilityTree({
+    pathname: '/WebMCP/index.html',
+    root,
+    contextSurface: null
+  });
+
+  assert.equal(tree.observationStatus, 'unavailable');
+  assert.match(tree.observationError, /browser inspection unavailable/);
+  assert.deepEqual(tree.liveWebMCPTools, []);
+  assert.equal(tree.declaredToolNames.includes('read_case_context'), true);
 });
