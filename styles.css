@@ -86,7 +86,7 @@ h2 {
   gap: 8px;
 }
 
-.status, .severity, .counter, .live-dot {
+.status, .severity, .counter, .live-dot, .nav-pill {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--line);
@@ -103,6 +103,9 @@ h2 {
 .severity { color: var(--red); background: rgba(255, 142, 142, .08); }
 .counter { color: var(--amber); }
 .live-dot { color: var(--green); padding: 5px 8px; }
+.nav-pill { color: var(--muted); text-decoration: none; background: rgba(255,255,255,.025); transition: border-color .15s ease, color .15s ease, transform .15s ease; }
+.nav-pill:hover { color: var(--text); border-color: rgba(255,255,255,.25); transform: translateY(-1px); }
+.nav-pill.active { color: var(--cyan); border-color: rgba(98, 232, 255, .3); background: rgba(98, 232, 255, .07); }
 
 .layout {
   display: grid;
@@ -180,6 +183,7 @@ dd { margin: 0; font-size: .91rem; font-weight: 700; }
 .empty-state { color: var(--muted) !important; }
 .empty-text { color: var(--muted); font-style: italic; }
 .microcopy { margin: 9px 0 0; color: var(--muted); font-size: .72rem; }
+.capability-copy { margin: -4px 0 12px; }
 
 .approval-list { display: grid; gap: 10px; }
 .approval-card {
@@ -213,6 +217,37 @@ button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.25);
 button.approve { color: var(--green); }
 button.reject { color: var(--red); }
 button:disabled { opacity: .45; cursor: default; transform: none; }
+
+.field-label { display: block; color: var(--muted); font-size: .78rem; font-weight: 800; margin-bottom: 8px; }
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, .18);
+  color: var(--text);
+  padding: 13px;
+  font: inherit;
+  line-height: 1.5;
+  outline: none;
+}
+textarea:focus { border-color: rgba(98, 232, 255, .4); box-shadow: 0 0 0 3px rgba(98, 232, 255, .07); }
+.form-actions { margin-top: 10px; }
+
+.capability-tree {
+  margin: 0;
+  max-height: 500px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, .24);
+  padding: 15px;
+  color: #bfe7ef;
+  font: 500 .73rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
 .history-list {
   list-style: none;
