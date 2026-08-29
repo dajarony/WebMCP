@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Auralis Asset Inspector — page-local WebMCP capabilities inside a multi-page agent workspace." />
+  <title>Auralis Asset Inspector</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">WEBMCP CHALLENGE · MULTI-PAGE</p>
+      <h1>Auralis Asset Inspector</h1>
+      <p class="subtitle">The site-wide agent map stays stable while this page exposes its own local tools.</p>
+    </div>
+    <div class="status-cluster">
+      <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
+      <a class="nav-pill" href="./index.html">Case Workspace</a>
+      <a class="nav-pill active" href="./asset.html">Asset Inspector</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel case-panel" data-agent-expose="true" data-capability-id="asset-context" data-capability-kind="readable-context" aria-labelledby="asset-title">
+      <div class="panel-heading">
+        <div>
+          <p class="kicker">ACTIVE ASSET</p>
+          <h2 id="asset-title">Walk-in cold room CR-02</h2>
+        </div>
+        <span class="severity">ATTENTION</span>
+      </div>
+
+      <dl class="case-grid">
+        <div><dt>Asset</dt><dd>CR-02</dd></div>
+        <div><dt>Location</dt><dd>Isla Verde Hotel · Kitchen level</dd></div>
+        <div><dt>Temperature</dt><dd id="asset-temp">8.0 °C</dd></div>
+        <div><dt>Condenser fan</dt><dd id="asset-fan">Intermittent noise</dd></div>
+      </dl>
+
+      <div class="context-box">
+        <p class="label">Inspection focus</p>
+        <p id="inspection-focus">No inspection focus selected yet.</p>
+      </div>
+    </section>
+
+    <section class="panel" data-agent-expose="true" data-capability-id="inspection-form" data-capability-kind="form" aria-labelledby="inspection-title">
+      <div class="panel-heading compact">
+        <div>
+          <p class="kicker">SHARED FORM</p>
+          <h2 id="inspection-title">Inspection note</h2>
+        </div>
+      </div>
+
+      <form id="inspection-note-form" data-agent-expose="true" data-capability-id="inspection-note-form" data-capability-kind="review-form">
+        <label class="field-label" for="inspection-note">Note prepared by human or agent</label>
+        <textarea id="inspection-note" name="inspection_note" rows="7" maxlength="1200" placeholder="Record observations here…"></textarea>
+        <div class="button-row form-actions">
+          <button type="submit" data-human-only>Save to local history</button>
+          <button type="reset" data-human-only>Clear</button>
+        </div>
+      </form>
+      <p class="microcopy">The agent can prepare this field. Only the human form submit records it in local history.</p>
+    </section>
+
+    <section class="panel" data-agent-expose="true" data-capability-id="asset-history" data-capability-kind="audit-history" aria-labelledby="asset-history-title">
+      <div class="panel-heading compact">
+        <div>
+          <p class="kicker">PAGE HISTORY</p>
+          <h2 id="asset-history-title">Inspection history</h2>
+        </div>
+      </div>
+      <ul id="asset-history-list" class="history-list"></ul>
+    </section>
+
+    <section class="panel" data-agent-expose="true" data-capability-id="capability-tree" data-capability-kind="agent-introspection" aria-labelledby="capability-tree-title">
+      <div class="panel-heading compact">
+        <div>
+          <p class="kicker">AGENT VIEW</p>
+          <h2 id="capability-tree-title">Live capability tree</h2>
+        </div>
+        <span class="status status-ready">semantic</span>
+      </div>
+      <pre id="capability-tree-preview" class="capability-tree">Waiting for WebMCP registration…</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP · Global discovery + page-local capabilities.</p>
+  </footer>
+
+  <script type="module" src="./asset.js"></script>
+</body>
+</html>
