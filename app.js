@@ -1,0 +1,279 @@
+import { registerWebMCPTools } from './webmcp.js';
+
+const state = {
+  case: {
+    id: 'SRV-2047',
+    title: 'Cold room temperature rising',
+    customer: 'Isla Verde Hotel',
+    asset: 'Walk-in cold room CR-02',
+    severity: 'high',
+    status: 'Investigating',
+    description: 'Temperature increased from 3°C to 8°C over 40 minutes. Compressor is running. Staff report intermittent condenser fan noise. No product loss has been reported.'
+  },
+  workPlan: [],
+  customerUpdate: '',
+  proposals: [],
+  history: [
+    { at: Date.now(), text: 'Case opened in Auralis Operator Desk.' }
+  ]
+};
+
+const els = {
+  webmcpStatus: document.querySelector('#webmcp-status'),
+  workPlan: document.querySelector('#work-plan'),
+  customerUpdate: document.querySelector('#customer-update'),
+  approvalList: document.querySelector('#approval-list'),
+  approvalCount: document.querySelector('#approval-count'),
+  historyList: document.querySelector('#history-list')
+};
+
+function nowLabel(timestamp = Date.now()) {
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(timestamp);
+}
+
+function addHistory(text) {
+  state.history.unshift({ at: Date.now(), text });
+  renderHistory();
+}
+
+function makeId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  return `proposal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function renderPlan() {
+  els.workPlan.replaceChildren();
+  if (!state.workPlan.length) {
+    const item = document.createElement('li');
+    item.textContent = 'Ask the agent to create a work plan.';
+    els.workPlan.append(item);
+    els.workPlan.classList.add('empty-state');
+    return;
+  }
+  els.workPlan.classList.remove('empty-state');
+  for (const step of state.workPlan) {
+    const item = document.createElement('li');
+    item.textContent = step;
+    els.workPlan.append(item);
+  }
+}
+
+function renderCustomerUpdate() {
+  if (!state.customerUpdate) {
+    els.customerUpdate.textContent = 'No customer update prepared yet.';
+    els.customerUpdate.classList.add('empty-text');
+    return;
+  }
+  els.customerUpdate.textContent = state.customerUpdate;
+  els.customerUpdate.classList.remove('empty-text');
+}
+
+function statusLabel(proposal) {
+  if (proposal.status === 'approved' && !proposal.consumed) return 'Approved · waiting for agent';
+  if (proposal.status === 'executed') return 'Executed · approval consumed';
+  return proposal.status;
+}
+
+function renderApprovals() {
+  els.approvalList.replaceChildren();
+  const pending = state.proposals.filter((item) => item.status === 'pending').length;
+  els.approvalCount.textContent = `${pending} pending`;
+
+  if (!state.proposals.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-card';
+    empty.textContent = 'No sensitive action is waiting for approval.';
+    els.approvalList.append(empty);
+    return;
+  }
+
+  for (const proposal of state.proposals) {
+    const card = document.createElement('article');
+    card.className = 'approval-card';
+    card.dataset.status = proposal.status;
+
+    const title = document.createElement('h3');
+    title.textContent = proposal.action;
+
+    const reason = document.createElement('p');
+    reason.textContent = proposal.reason;
+
+    const meta = document.createElement('div');
+    meta.className = 'approval-meta';
+
+    const status = document.createElement('span');
+    status.className = 'approval-state';
+    status.textContent = statusLabel(proposal);
+
+    const buttons = document.createElement('div');
+    buttons.className = 'button-row';
+
+    if (proposal.status === 'pending') {
+      const approve = document.createElement('button');
+      approve.className = 'approve';
+      approve.textContent = 'Approve';
+      approve.dataset.action = 'approve';
+      approve.dataset.proposalId = proposal.id;
+
+      const reject = document.createElement('button');
+      reject.className = 'reject';
+      reject.textContent = 'Reject';
+      reject.dataset.action = 'reject';
+      reject.dataset.proposalId = proposal.id;
+
+      buttons.append(approve, reject);
+    }
+
+    meta.append(status, buttons);
+    card.append(title, reason, meta);
+    els.approvalList.append(card);
+  }
+}
+
+function renderHistory() {
+  els.historyList.replaceChildren();
+  for (const entry of state.history) {
+    const item = document.createElement('li');
+    item.className = 'history-item';
+
+    const time = document.createElement('span');
+    time.className = 'history-time';
+    time.textContent = nowLabel(entry.at);
+
+    const text = document.createElement('span');
+    text.className = 'history-text';
+    text.textContent = entry.text;
+
+    item.append(time, text);
+    els.historyList.append(item);
+  }
+}
+
+function renderAll() {
+  renderPlan();
+  renderCustomerUpdate();
+  renderApprovals();
+  renderHistory();
+}
+
+const operatorApi = {
+  readCaseContext() {
+    return {
+      case: { ...state.case },
+      workPlan: [...state.workPlan],
+      customerUpdate: state.customerUpdate || null,
+      sensitiveActions: state.proposals.map(({ id, action, reason, status, consumed }) => ({
+        id, action, reason, status, consumed
+      }))
+    };
+  },
+
+  createWorkPlan(steps) {
+    const cleanSteps = steps
+      .map((step) => String(step).trim())
+      .filter(Boolean)
+      .slice(0, 8);
+
+    if (!cleanSteps.length) throw new Error('A work plan requires at least one non-empty step.');
+    state.workPlan = cleanSteps;
+    renderPlan();
+    addHistory(`Agent prepared a ${cleanSteps.length}-step work plan.`);
+    return { ok: true, steps: cleanSteps };
+  },
+
+  prepareCustomerUpdate(message) {
+    const clean = String(message).trim();
+    if (!clean) throw new Error('Customer update cannot be empty.');
+    state.customerUpdate = clean.slice(0, 1500);
+    renderCustomerUpdate();
+    addHistory('Agent prepared a customer update draft. No message was sent.');
+    return { ok: true, draft: state.customerUpdate, sent: false };
+  },
+
+  requestSensitiveAction(action, reason) {
+    const cleanAction = String(action).trim();
+    const cleanReason = String(reason).trim();
+    if (!cleanAction || !cleanReason) throw new Error('Sensitive actions require an action and a reason.');
+
+    const proposal = {
+      id: makeId(),
+      action: cleanAction.slice(0, 180),
+      reason: cleanReason.slice(0, 500),
+      status: 'pending',
+      consumed: false,
+      createdAt: Date.now()
+    };
+
+    state.proposals.unshift(proposal);
+    renderApprovals();
+    addHistory(`Agent requested human approval: ${proposal.action}`);
+    return {
+      ok: true,
+      proposalId: proposal.id,
+      status: proposal.status,
+      message: 'Proposal created. A human must approve it in the page before it can be applied.'
+    };
+  },
+
+  applyApprovedAction(proposalId) {
+    const proposal = state.proposals.find((item) => item.id === proposalId);
+    if (!proposal) throw new Error('Proposal not found.');
+    if (proposal.status !== 'approved') throw new Error(`Action blocked: proposal status is ${proposal.status}. Human approval is required.`);
+    if (proposal.consumed) throw new Error('Action blocked: this approval has already been consumed.');
+
+    proposal.consumed = true;
+    proposal.status = 'executed';
+    proposal.executedAt = Date.now();
+    renderApprovals();
+    addHistory(`Approved action applied once: ${proposal.action}`);
+
+    return {
+      ok: true,
+      proposalId: proposal.id,
+      status: proposal.status,
+      approvalConsumed: true,
+      result: `Applied approved action: ${proposal.action}`
+    };
+  }
+};
+
+els.approvalList.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-proposal-id]');
+  if (!button) return;
+
+  const proposal = state.proposals.find((item) => item.id === button.dataset.proposalId);
+  if (!proposal || proposal.status !== 'pending') return;
+
+  if (button.dataset.action === 'approve') {
+    proposal.status = 'approved';
+    proposal.approvedAt = Date.now();
+    addHistory(`Human approved once: ${proposal.action}`);
+  } else {
+    proposal.status = 'rejected';
+    proposal.rejectedAt = Date.now();
+    addHistory(`Human rejected: ${proposal.action}`);
+  }
+
+  renderApprovals();
+});
+
+renderAll();
+
+if ('modelContext' in document && document.modelContext) {
+  try {
+    await registerWebMCPTools(operatorApi);
+    els.webmcpStatus.textContent = 'WebMCP tools ready';
+    els.webmcpStatus.className = 'status status-ready';
+    addHistory('Five WebMCP tools registered for the active page.');
+  } catch (error) {
+    console.error('WebMCP registration failed', error);
+    els.webmcpStatus.textContent = 'WebMCP registration failed';
+  }
+} else {
+  els.webmcpStatus.textContent = 'WebMCP unavailable in this browser';
+  addHistory('Page loaded without WebMCP support; the human interface remains usable.');
+}
