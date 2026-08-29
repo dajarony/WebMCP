@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Auralis Operator Desk — a human-agent collaboration demo built with WebMCP." />
+  <meta name="description" content="Auralis Operator Desk — a human-agent collaboration demo built with multi-page WebMCP." />
   <title>Auralis Operator Desk</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -12,16 +12,18 @@
     <div>
       <p class="eyebrow">WEBMCP CHALLENGE · 2026</p>
       <h1>Auralis Operator Desk</h1>
-      <p class="subtitle">Human judgment. Agent speed. One shared case.</p>
+      <p class="subtitle">Human judgment. Agent speed. One shared multi-page workspace.</p>
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
       <span class="status status-safe">Human approval enabled</span>
+      <a class="nav-pill active" href="./index.html">Case Workspace</a>
+      <a class="nav-pill" href="./asset.html">Asset Inspector</a>
     </div>
   </header>
 
   <main class="layout">
-    <section class="panel case-panel" aria-labelledby="case-title">
+    <section class="panel case-panel" data-agent-expose="true" data-capability-id="case-context" data-capability-kind="readable-context" aria-labelledby="case-title">
       <div class="panel-heading">
         <div>
           <p class="kicker">ACTIVE CASE</p>
@@ -51,7 +53,7 @@
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="plan-title">
+    <section class="panel" data-agent-expose="true" data-capability-id="work-plan" data-capability-kind="agent-preparation" aria-labelledby="plan-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">AGENT PREPARATION</p>
@@ -63,7 +65,7 @@
       </ol>
     </section>
 
-    <section class="panel" aria-labelledby="message-title">
+    <section class="panel" data-agent-expose="true" data-capability-id="customer-update" data-capability-kind="draft-workspace" aria-labelledby="message-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">DRAFT ONLY</p>
@@ -74,7 +76,7 @@
       <p class="microcopy">Preparing a message never sends it.</p>
     </section>
 
-    <section class="panel approval-panel" aria-labelledby="approval-title">
+    <section class="panel approval-panel" data-agent-expose="true" data-capability-id="human-approval" data-capability-kind="human-only-boundary" data-human-only aria-labelledby="approval-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">ACTION BOUNDARY</p>
@@ -87,7 +89,7 @@
       </div>
     </section>
 
-    <section class="panel history-panel" aria-labelledby="history-title">
+    <section class="panel history-panel" data-agent-expose="true" data-capability-id="case-history" data-capability-kind="audit-history" aria-labelledby="history-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">AUDIT TRAIL</p>
@@ -96,10 +98,22 @@
       </div>
       <ul id="history-list" class="history-list"></ul>
     </section>
+
+    <section class="panel history-panel" data-agent-expose="true" data-capability-id="capability-tree" data-capability-kind="agent-introspection" aria-labelledby="capability-tree-title">
+      <div class="panel-heading compact">
+        <div>
+          <p class="kicker">AGENT VIEW</p>
+          <h2 id="capability-tree-title">Live capability tree</h2>
+        </div>
+        <span class="status status-ready">global + page</span>
+      </div>
+      <p class="microcopy capability-copy">The tree is built from the site manifest, live WebMCP registration and explicitly exposed page regions. Human-only controls are visible as structure but are not agent-executable.</p>
+      <pre id="capability-tree-preview" class="capability-tree">Waiting for WebMCP registration…</pre>
+    </section>
   </main>
 
   <footer>
-    <p><strong>Auralis Operator Desk</strong> · WebMCP demo · Sensitive actions require explicit, single-use human approval.</p>
+    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP demo · Sensitive actions require explicit, single-use human approval.</p>
   </footer>
 
   <script type="module" src="./app.js"></script>
