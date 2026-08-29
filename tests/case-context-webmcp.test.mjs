@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { CaseContextWebMCP } from '../case-context-webmcp.js';
 
 class FakeModelContext {
-  constructor() {
+  constructor({ failTool = null } = {}) {
     this.tools = [];
     this.listeners = new Set();
+    this.failTool = failTool;
   }
 
   async registerTool(tool, options = {}) {
+    if (tool.name === this.failTool) throw new Error(`registration failed: ${tool.name}`);
     const entry = { tool };
     this.tools.push(entry);
     options.signal?.addEventListener('abort', () => {
@@ -44,10 +46,54 @@ test('ECA: contextual case tools exist only after a declared component selection
   await surface.select('condenser_fan');
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'read_selected_component'), true);
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'prepare_component_diagnostic'), true);
+  assert.equal(surface.snapshot().activationState, 'active');
 
   surface.clear();
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'read_selected_component'), false);
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'prepare_component_diagnostic'), false);
+  assert.equal(surface.snapshot().activationState, 'inactive');
+});
+
+test('ECA: activation snapshots never announce both dynamic tools before both registrations finish', async () => {
+  const snapshots = [];
+  const modelContext = new FakeModelContext();
+  const surface = new CaseContextWebMCP({
+    modelContext,
+    onChange: (snapshot) => snapshots.push(snapshot)
+  });
+  await surface.register();
+  await surface.select('compressor');
+
+  const activating = snapshots.filter((snapshot) => snapshot.activationState === 'activating');
+  assert.ok(activating.some((snapshot) => snapshot.dynamicToolNames.length === 0));
+  assert.ok(activating.some((snapshot) => snapshot.dynamicToolNames.length === 1));
+  assert.equal(surface.snapshot().dynamicToolNames.length, 2);
+});
+
+test('ECA: failed contextual registration rolls back selection and authority', async () => {
+  const modelContext = new FakeModelContext({ failTool: 'prepare_component_diagnostic' });
+  const surface = new CaseContextWebMCP({ modelContext });
+  await surface.register();
+
+  await assert.rejects(() => surface.select('compressor'), /registration failed/);
+  assert.equal(surface.snapshot().selectedComponent, null);
+  assert.equal(surface.snapshot().activationState, 'inactive');
+  assert.deepEqual(surface.snapshot().dynamicToolNames, []);
+  assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'read_selected_component'), false);
+});
+
+test('ECA: switching between declared components does not duplicate dynamic tools', async () => {
+  const modelContext = new FakeModelContext();
+  const surface = new CaseContextWebMCP({ modelContext });
+  await surface.register();
+  await surface.select('compressor');
+  await surface.select('condenser_fan');
+
+  const dynamic = modelContext.tools
+    .map(({ tool }) => tool.name)
+    .filter((name) => ['read_selected_component', 'prepare_component_diagnostic'].includes(name));
+  assert.deepEqual(dynamic.sort(), ['prepare_component_diagnostic', 'read_selected_component']);
+  assert.equal(surface.snapshot().selectedComponent.id, 'condenser_fan');
 });
 
 test('ECA: unknown component fails closed without adding authority', async () => {
