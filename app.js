@@ -1,5 +1,7 @@
 import { registerWebMCPTools } from './webmcp.js';
 import { ApprovalBoundary } from './approval-boundary.js';
+import { registerSiteWebMCPTools } from './site-webmcp.js';
+import { buildCapabilityTree } from './capability-tree.js';
 
 const approvalBoundary = new ApprovalBoundary();
 
@@ -27,7 +29,8 @@ const els = {
   customerUpdate: document.querySelector('#customer-update'),
   approvalList: document.querySelector('#approval-list'),
   approvalCount: document.querySelector('#approval-count'),
-  historyList: document.querySelector('#history-list')
+  historyList: document.querySelector('#history-list'),
+  capabilityTree: document.querySelector('#capability-tree-preview')
 };
 
 function nowLabel(timestamp = Date.now()) {
@@ -116,12 +119,14 @@ function renderApprovals() {
       approve.textContent = 'Approve';
       approve.dataset.action = 'approve';
       approve.dataset.proposalId = proposal.id;
+      approve.dataset.humanOnly = 'true';
 
       const reject = document.createElement('button');
       reject.className = 'reject';
       reject.textContent = 'Reject';
       reject.dataset.action = 'reject';
       reject.dataset.proposalId = proposal.id;
+      reject.dataset.humanOnly = 'true';
 
       buttons.append(approve, reject);
     }
@@ -156,6 +161,14 @@ function renderAll() {
   renderCustomerUpdate();
   renderApprovals();
   renderHistory();
+}
+
+async function refreshCapabilityTree() {
+  const tree = await buildCapabilityTree();
+  if (els.capabilityTree) {
+    els.capabilityTree.textContent = JSON.stringify(tree, null, 2);
+  }
+  return tree;
 }
 
 const operatorApi = {
@@ -241,15 +254,31 @@ renderAll();
 
 if ('modelContext' in document && document.modelContext) {
   try {
+    await registerSiteWebMCPTools({
+      getCapabilityTree: refreshCapabilityTree,
+      navigate: (target) => globalThis.location.assign(target)
+    });
     await registerWebMCPTools(operatorApi);
-    els.webmcpStatus.textContent = 'WebMCP tools ready';
+
+    els.webmcpStatus.textContent = '8 WebMCP tools ready';
     els.webmcpStatus.className = 'status status-ready';
-    addHistory('Five WebMCP tools registered for the active page.');
+    addHistory('Three global discovery tools and five Case Workspace tools registered.');
+
+    document.modelContext.addEventListener?.('toolchange', () => {
+      refreshCapabilityTree().catch(() => {});
+    });
+    await refreshCapabilityTree();
   } catch (error) {
     console.error('WebMCP registration failed', error);
     els.webmcpStatus.textContent = 'WebMCP registration failed';
+    if (els.capabilityTree) els.capabilityTree.textContent = `Capability tree unavailable: ${error.message}`;
   }
 } else {
   els.webmcpStatus.textContent = 'WebMCP unavailable in this browser';
+  if (els.capabilityTree) {
+    els.capabilityTree.textContent = JSON.stringify({
+      note: 'The human UI works, but native WebMCP is unavailable in this browser.'
+    }, null, 2);
+  }
   addHistory('Page loaded without WebMCP support; the human interface remains usable.');
 }
