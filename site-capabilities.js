@@ -41,6 +41,20 @@ export const SITE_CAPABILITY_MANIFEST = {
         { tool: 'list_case_components', kind: 'read', description: 'List declared components available for contextual inspection.' },
         { tool: 'select_case_component', kind: 'prepare', description: 'Select a declared component and expose its bounded contextual tools.' },
         { tool: 'clear_case_component_selection', kind: 'prepare', description: 'Clear component context and remove contextual tools.' }
+      ],
+      contextualCapabilities: [
+        {
+          tool: 'read_selected_component',
+          kind: 'read',
+          availability: 'component-selected',
+          description: 'Read the selected component only while a declared component context is active.'
+        },
+        {
+          tool: 'prepare_component_diagnostic',
+          kind: 'prepare',
+          availability: 'component-selected',
+          description: 'Prepare a bounded local diagnostic only while a declared component context is active.'
+        }
       ]
     },
     {
@@ -53,15 +67,15 @@ export const SITE_CAPABILITY_MANIFEST = {
         { tool: 'read_asset_context', kind: 'read', description: 'Read current asset telemetry and inspection context.' },
         { tool: 'set_inspection_focus', kind: 'prepare', description: 'Set the current inspection focus visible to the human.' },
         { tool: 'prepare_inspection_note', kind: 'prepare', description: 'Prepare an inspection note in the page form for human review.' }
-      ]
+      ],
+      contextualCapabilities: []
     }
   ]
 };
 
 function normalizePath(pathname) {
   if (!pathname) return '/';
-  const value = pathname.endsWith('/') ? pathname : pathname;
-  return value || '/';
+  return pathname || '/';
 }
 
 export function currentPageDescriptor(pathname = globalThis.location?.pathname || '/') {
@@ -84,7 +98,8 @@ export function publicSiteManifest(pathname = globalThis.location?.pathname || '
       title: page.title,
       href: page.href,
       description: page.description,
-      advertisedCapabilities: page.capabilities.map((item) => ({ ...item }))
+      advertisedCapabilities: page.capabilities.map((item) => ({ ...item })),
+      contextualCapabilities: page.contextualCapabilities.map((item) => ({ ...item }))
     }))
   };
 }

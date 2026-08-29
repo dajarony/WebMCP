@@ -2,7 +2,7 @@ function json(value) {
   return JSON.stringify(value, null, 2);
 }
 
-export async function registerWebMCPTools(operatorApi) {
+export async function registerWebMCPTools(operatorApi, modelContext = document.modelContext) {
   const tools = [
     {
       name: 'read_case_context',
@@ -115,7 +115,7 @@ export async function registerWebMCPTools(operatorApi) {
   ];
 
   for (const tool of tools) {
-    await document.modelContext.registerTool(tool);
+    await modelContext.registerTool(tool);
   }
 
   return tools.map((tool) => tool.name);

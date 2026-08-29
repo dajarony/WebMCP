@@ -11,8 +11,6 @@ const COMPONENTS = Object.freeze([
   })
 ]);
 
-const DYNAMIC_TOOL_NAMES = Object.freeze(['read_selected_component', 'prepare_component_diagnostic']);
-
 function json(value) {
   return JSON.stringify(value, null, 2);
 }
@@ -29,15 +27,18 @@ export class CaseContextWebMCP {
     this.diagnosticDraft = null;
     this.revision = 0;
     this.dynamicController = null;
+    this.dynamicToolNames = new Set();
+    this.activationState = 'inactive';
     this.toolChangeListener = () => this.#notify();
   }
 
   snapshot() {
     return {
       revision: this.revision,
+      activationState: this.activationState,
       selectedComponent: this.selectedComponent ? { ...this.selectedComponent } : null,
       diagnosticDraft: this.diagnosticDraft ? { ...this.diagnosticDraft } : null,
-      dynamicToolNames: this.dynamicController ? [...DYNAMIC_TOOL_NAMES] : []
+      dynamicToolNames: [...this.dynamicToolNames].sort()
     };
   }
 
@@ -53,10 +54,29 @@ export class CaseContextWebMCP {
     if (!component) throw new Error('Unknown case component.');
     this.selectedComponent = component;
     this.diagnosticDraft = null;
+
     if (!this.dynamicController) {
       this.dynamicController = new AbortController();
-      await this.#registerTools(this.#dynamicTools(), this.dynamicController.signal);
+      this.activationState = 'activating';
+      this.#notify();
+      try {
+        for (const tool of this.#dynamicTools()) {
+          await this.modelContext.registerTool(tool, { signal: this.dynamicController.signal });
+          this.dynamicToolNames.add(tool.name);
+          this.#notify();
+        }
+        this.activationState = 'active';
+      } catch (error) {
+        this.dynamicController.abort();
+        this.dynamicController = null;
+        this.dynamicToolNames.clear();
+        this.activationState = 'inactive';
+        this.selectedComponent = null;
+        this.#notify();
+        throw error;
+      }
     }
+
     this.#notify();
     return this.snapshot();
   }
@@ -64,8 +84,14 @@ export class CaseContextWebMCP {
   clear() {
     this.selectedComponent = null;
     this.diagnosticDraft = null;
-    this.dynamicController?.abort();
+    if (this.dynamicController) {
+      this.activationState = 'deactivating';
+      this.#notify();
+      this.dynamicController.abort();
+    }
     this.dynamicController = null;
+    this.dynamicToolNames.clear();
+    this.activationState = 'inactive';
     this.#notify();
     return this.snapshot();
   }
@@ -100,8 +126,8 @@ export class CaseContextWebMCP {
     ];
   }
 
-  async #registerTools(tools, signal) {
-    for (const tool of tools) await this.modelContext.registerTool(tool, signal ? { signal } : undefined);
+  async #registerTools(tools) {
+    for (const tool of tools) await this.modelContext.registerTool(tool);
   }
 
   #notify() {

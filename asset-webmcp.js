@@ -2,7 +2,7 @@ function json(value) {
   return JSON.stringify(value, null, 2);
 }
 
-export async function registerAssetWebMCPTools(assetApi) {
+export async function registerAssetWebMCPTools(assetApi, modelContext = document.modelContext) {
   const tools = [
     {
       name: 'read_asset_context',
@@ -65,7 +65,7 @@ export async function registerAssetWebMCPTools(assetApi) {
   ];
 
   for (const tool of tools) {
-    await document.modelContext.registerTool(tool);
+    await modelContext.registerTool(tool);
   }
 
   return tools.map((tool) => tool.name);

@@ -4,7 +4,22 @@ function json(value) {
   return JSON.stringify(value, null, 2);
 }
 
-export async function registerSiteWebMCPTools({ getCapabilityTree, navigate }) {
+export function resolveNavigationTarget(pageId, baseHref = globalThis.location?.href || 'http://localhost/') {
+  const page = resolveCapabilityPage(pageId);
+  if (!page) throw new Error(`Unknown capability page: ${pageId}`);
+
+  const base = new URL(baseHref);
+  const target = new URL(page.href, base);
+  if (target.origin !== base.origin) throw new Error('Capability navigation must remain same-origin.');
+  return { page, targetHref: target.href };
+}
+
+export async function registerSiteWebMCPTools({
+  getCapabilityTree,
+  navigate,
+  modelContext = document.modelContext,
+  baseHref = globalThis.location?.href || 'http://localhost/'
+}) {
   const tools = [
     {
       name: 'describe_site_capabilities',
@@ -18,7 +33,7 @@ export async function registerSiteWebMCPTools({ getCapabilityTree, navigate }) {
         readOnlyHint: true,
         untrustedContentHint: true
       },
-      execute: async () => json(publicSiteManifest())
+      execute: async () => json(publicSiteManifest(new URL(baseHref).pathname))
     },
     {
       name: 'read_page_capability_tree',
@@ -54,18 +69,20 @@ export async function registerSiteWebMCPTools({ getCapabilityTree, navigate }) {
         untrustedContentHint: true
       },
       execute: async ({ page_id }) => {
-        const page = resolveCapabilityPage(page_id);
-        if (!page) throw new Error(`Unknown capability page: ${page_id}`);
-        const target = new URL(page.href, globalThis.location.href).href;
-        const result = { ok: true, pageId: page.id, title: page.title, target };
-        queueMicrotask(() => navigate(target));
-        return json(result);
+        const { page, targetHref } = resolveNavigationTarget(page_id, baseHref);
+        queueMicrotask(() => navigate(targetHref));
+        return json({
+          ok: true,
+          pageId: page.id,
+          title: page.title,
+          navigationRequested: true
+        });
       }
     }
   ];
 
   for (const tool of tools) {
-    await document.modelContext.registerTool(tool);
+    await modelContext.registerTool(tool);
   }
 
   return tools.map((tool) => tool.name);
