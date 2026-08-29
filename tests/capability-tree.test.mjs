@@ -18,29 +18,62 @@ test('site manifest exposes stable global capabilities and both pages', () => {
   assert.equal(manifest.globalCapabilities.length, 3);
   assert.deepEqual(manifest.pages.map((page) => page.id), ['case-workspace', 'asset-inspector']);
   assert.equal(manifest.currentPageId, 'case-workspace');
+  assert.equal(manifest.pages.find((page) => page.id === 'asset-inspector').contextualCapabilities.length, 2);
 });
 
-test('capability tree distinguishes live global and page-local tools', () => {
+test('capability tree distinguishes live global, page-local and contextual tools', () => {
   const tree = composeCapabilityTree({
     pathname: '/WebMCP/asset.html',
     skeleton: [
-      { id: 'inspection-note-form', kind: 'review-form', humanOnly: false }
+      {
+        id: 'component-surface',
+        kind: 'contextual-api',
+        humanOnly: false,
+        tools: ['select_asset_component', 'read_selected_component', 'prepare_component_test']
+      }
     ],
     liveTools: [
       { name: 'describe_site_capabilities' },
       { name: 'read_page_capability_tree' },
       { name: 'navigate_to_capability_page' },
       { name: 'read_asset_context' },
+      { name: 'select_asset_component' },
       { name: 'set_inspection_focus' },
-      { name: 'prepare_inspection_note' }
+      { name: 'prepare_inspection_note' },
+      { name: 'read_selected_component' },
+      { name: 'prepare_component_test' }
     ]
   });
 
   assert.equal(tree.currentPage.id, 'asset-inspector');
   assert.ok(tree.globalCapabilities.every((capability) => capability.live));
   assert.ok(tree.pageCapabilities.every((capability) => capability.live));
-  assert.equal(tree.semanticSkeleton[0].id, 'inspection-note-form');
+  assert.ok(tree.contextualCapabilities.every((capability) => capability.live));
+  assert.deepEqual(tree.semanticSkeleton[0].liveTools, [
+    'select_asset_component',
+    'read_selected_component',
+    'prepare_component_test'
+  ]);
   assert.equal(tree.availablePages.find((page) => page.id === 'asset-inspector').current, true);
+});
+
+test('contextual capabilities are advertised but not live before activation', () => {
+  const tree = composeCapabilityTree({
+    pathname: '/WebMCP/asset.html',
+    skeleton: [],
+    liveTools: [
+      { name: 'describe_site_capabilities' },
+      { name: 'read_page_capability_tree' },
+      { name: 'navigate_to_capability_page' },
+      { name: 'read_asset_context' },
+      { name: 'select_asset_component' },
+      { name: 'set_inspection_focus' },
+      { name: 'prepare_inspection_note' }
+    ]
+  });
+
+  assert.ok(tree.pageCapabilities.every((capability) => capability.live));
+  assert.ok(tree.contextualCapabilities.every((capability) => capability.live === false));
 });
 
 test('capability tree exposes missing advertised tools as not live', () => {
