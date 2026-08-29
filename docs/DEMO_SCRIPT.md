@@ -1,6 +1,25 @@
 # Three-minute demo script
 
-The goal is to show collaboration, not architecture.
+The goal is to show collaboration through page-aware WebMCP, not a long
+architecture lecture.
+
+## Scene 0 — Agent discovers the workspace
+
+Start at `index.html`.
+
+**Prompt**
+
+> List the available workspace pages and read the semantic tree for the
+> operator case. Then open the operator case. Do not take any sensitive action.
+
+Expected WebMCP use:
+
+1. `list_workspace_pages`
+2. `read_page_tree(page_id="operator_case")`
+3. `open_workspace_page(page_id="operator_case")`
+
+Visible result: the agent describes the declared case regions and crosses only
+to the declared local page. It cannot use a raw URL or operate arbitrary DOM.
 
 ## Scene 1 — Agent understands the live case
 

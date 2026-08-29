@@ -1,12 +1,35 @@
+/*
+SUME DOCBLOCK
+
+Nombre: approval-boundary
+Tipo: Lógica
+
+Entradas:
+- Acción, motivo, identificador de propuesta y decisión humana.
+
+Acciones:
+- Aplica la máquina de estados pending → approved/rejected → executed.
+
+Salidas:
+- Propuesta saneada o ToolContractError fail-closed.
+*/
+
+import { ToolContractError, ToolErrorCode } from '../contratos/tool-errors.js';
+
 function defaultIdFactory() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `proposal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function requireText(value, label, maxLength) {
-  const clean = String(value ?? '').trim();
-  if (!clean) throw new Error(`${label} is required.`);
-  return clean.slice(0, maxLength);
+  if (typeof value !== 'string') {
+    throw new ToolContractError(ToolErrorCode.INVALID_PROPOSAL, `${label} must be text.`);
+  }
+  const clean = value.trim();
+  if (!clean || clean.length > maxLength) {
+    throw new ToolContractError(ToolErrorCode.INVALID_PROPOSAL, `${label} must contain 1-${maxLength} characters.`);
+  }
+  return clean;
 }
 
 export class ApprovalBoundary {
@@ -25,7 +48,6 @@ export class ApprovalBoundary {
       consumed: false,
       createdAt: this.clock()
     };
-
     this.proposals.unshift(proposal);
     return proposal;
   }
@@ -50,12 +72,12 @@ export class ApprovalBoundary {
 
   apply(proposalId) {
     const proposal = this.find(proposalId);
-    if (!proposal) throw new Error('Proposal not found.');
-    if (proposal.status !== 'approved') {
-      throw new Error(`Action blocked: proposal status is ${proposal.status}. Human approval is required.`);
+    if (!proposal) {
+      throw new ToolContractError(ToolErrorCode.PROPOSAL_NOT_FOUND, 'Proposal not found.');
     }
-    if (proposal.consumed) throw new Error('Action blocked: this approval has already been consumed.');
-
+    if (proposal.status !== 'approved' || proposal.consumed) {
+      throw new ToolContractError(ToolErrorCode.ACTION_DENIED, 'Action blocked: a current human approval is required.');
+    }
     proposal.consumed = true;
     proposal.status = 'executed';
     proposal.executedAt = this.clock();
@@ -64,9 +86,11 @@ export class ApprovalBoundary {
 
   #requirePending(proposalId) {
     const proposal = this.find(proposalId);
-    if (!proposal) throw new Error('Proposal not found.');
+    if (!proposal) {
+      throw new ToolContractError(ToolErrorCode.PROPOSAL_NOT_FOUND, 'Proposal not found.');
+    }
     if (proposal.status !== 'pending') {
-      throw new Error(`Proposal cannot be changed from ${proposal.status}.`);
+      throw new ToolContractError(ToolErrorCode.PROPOSAL_STATE_DENIED, `Proposal cannot be changed from ${proposal.status}.`);
     }
     return proposal;
   }

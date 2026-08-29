@@ -2,7 +2,9 @@
 
 **Human judgment. Agent speed. One shared case.**
 
-Auralis Operator Desk is a WebMCP-native service desk where a human operator and an AI agent work on the same live case inside the browser.
+Auralis Workspace is a WebMCP-native, multipage service workspace. An agent can
+first discover the declared pages and each page’s functional skeleton, then
+open a permitted page and work on the same live case as the human.
 
 The agent can read the case, prepare a work plan, draft a customer update, and propose a sensitive action. Sensitive actions are deliberately separated from execution: a human must approve the proposal in the page, and that approval can be consumed only once.
 
@@ -23,7 +25,22 @@ await document.modelContext.registerTool({
 
 No `navigator.modelContext` compatibility layer is used.
 
-## WebMCP tools
+## Multipage semantic discovery
+
+Each page exposes the same three global WebMCP tools:
+
+| Tool | Purpose | Safety boundary |
+| --- | --- | --- |
+| `list_workspace_pages` | Lists the declared workspace pages and their tools | Fixed same-origin manifest only |
+| `read_page_tree` | Returns a curated semantic skeleton of a declared page | Not a raw DOM, selector, form-value, or hidden-state dump |
+| `open_workspace_page` | Opens a declared page by exact `page_id` | Fixed relative local route; no URL, query, fragment, or external origin |
+
+The initial directory page exposes those three tools. The Operator Desk page
+exposes them plus the five case tools below. This follows the page lifecycle:
+the browser rediscovers the tools registered by the destination page after
+same-origin navigation.
+
+## Operator Desk tools
 
 | Tool | Purpose | Sensitive side effect |
 | --- | --- | --- |
@@ -57,16 +74,18 @@ There is intentionally **no WebMCP tool that can approve a proposal**.
 
 ## Demo flow
 
-1. Open the active technical service case.
-2. Ask the agent to inspect the case with `read_case_context`.
-3. Ask it to prepare a diagnostic checklist with `create_work_plan`.
-4. Ask it to prepare a customer update with `prepare_customer_update`.
-5. Ask it to propose a sensitive action with `request_sensitive_action`.
-6. Try to apply it before approval — the page blocks the action.
-7. Human clicks **Approve** in the page.
-8. Agent calls `apply_approved_action` using the proposal ID.
-9. The page records execution and consumes the approval.
-10. A replay attempt is blocked.
+1. On the directory, ask the agent to call `list_workspace_pages` and
+   `read_page_tree`.
+2. Ask it to call `open_workspace_page` with `page_id: "operator_case"`.
+3. On the destination page, the agent discovers the case tools, then reads the
+   case with `read_case_context`.
+4. Ask it to prepare a diagnostic checklist with `create_work_plan`.
+5. Ask it to prepare a customer update with `prepare_customer_update`.
+6. Ask it to propose a sensitive action with `request_sensitive_action`.
+7. Try to apply it before approval — the page blocks the action.
+8. Human clicks **Approve** in the page.
+9. Agent calls `apply_approved_action` using the proposal ID.
+10. The page records execution and consumes the approval; a replay is blocked.
 
 That sequence demonstrates a shared human-agent workspace plus a real action boundary in under three minutes.
 
@@ -82,14 +101,17 @@ Then visit `http://localhost:8080`.
 
 The human interface works in ordinary browsers. To discover and invoke the registered tools, use a browser/client with WebMCP support, such as the ChatGPT built-in browser or a compatible experimental Chrome build.
 
-## Files
+## Architecture
 
 ```text
-index.html        # shared operator interface
-styles.css        # visual system
-app.js            # case state, human approval boundary, audit trail
-webmcp.js         # WebMCP tool registrations and schemas
-docs/             # challenge scope and implementation notes
+index.html                  # Workspace directory with global tools
+case.html                   # shared operator interface
+entradas/                   # page bootstrap and WebMCP registration
+logica/                     # workspace and approval boundary
+salidas/                    # safe DOM and tool-result rendering
+contratos/                  # WebMCP schemas, errors and FASER
+cambios/, mapa-global/      # traceability and live architecture map
+docs/                       # challenge scope, CMCF and demo notes
 ```
 
 ## Scope and provenance
@@ -101,6 +123,8 @@ See [`docs/HACKATHON_SCOPE.md`](./docs/HACKATHON_SCOPE.md).
 ## Security notes
 
 - No arbitrary URL fetching.
+- No arbitrary DOM controls, selectors, raw page-tree export or navigation URLs.
+- Every page, semantic node and route is declared in a local immutable manifest.
 - No shell or filesystem access.
 - No credentials are stored in the repository.
 - Customer updates are drafts only.

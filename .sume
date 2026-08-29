@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "strict_docblock": true,
+  "auto_update_arquitectura": true,
+  "require_change_log": true,
+  "architecture_map_guard": true,
+  "map_guard": {
+    "tracked_roots": ["entradas", "logica", "salidas", "contratos"],
+    "source_extensions": [".js"],
+    "exclude": []
+  }
+}

@@ -3,105 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Auralis Operator Desk — a human-agent collaboration demo built with WebMCP." />
-  <title>Auralis Operator Desk</title>
+  <meta name="description" content="Auralis Workspace — a safe multipage WebMCP demonstration." />
+  <title>Auralis Workspace</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div>
       <p class="eyebrow">WEBMCP CHALLENGE · 2026</p>
-      <h1>Auralis Operator Desk</h1>
-      <p class="subtitle">Human judgment. Agent speed. One shared case.</p>
+      <h1>Auralis Workspace</h1>
+      <p class="subtitle">A page-aware workspace for human-agent collaboration.</p>
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
-      <span class="status status-safe">Human approval enabled</span>
+      <span class="status status-safe">Curated page manifest</span>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="panel case-panel" aria-labelledby="case-title">
-      <div class="panel-heading">
-        <div>
-          <p class="kicker">ACTIVE CASE</p>
-          <h2 id="case-title">Cold room temperature rising</h2>
-        </div>
-        <span id="case-severity" class="severity">HIGH</span>
-      </div>
-
-      <dl class="case-grid">
-        <div><dt>Case</dt><dd id="case-id">SRV-2047</dd></div>
-        <div><dt>Customer</dt><dd id="case-customer">Isla Verde Hotel</dd></div>
-        <div><dt>Asset</dt><dd id="case-asset">Walk-in cold room CR-02</dd></div>
-        <div><dt>Status</dt><dd id="case-status">Investigating</dd></div>
-      </dl>
-
-      <div class="context-box">
-        <p class="label">Reported context</p>
-        <p id="case-description">Temperature increased from 3°C to 8°C over 40 minutes. Compressor is running. Staff report intermittent condenser fan noise. No product loss has been reported.</p>
-      </div>
-
-      <div class="shared-state">
-        <div>
-          <p class="label">Shared workspace</p>
-          <p>Anything the agent prepares appears here for the human to review.</p>
-        </div>
-        <span class="live-dot">LIVE</span>
+  <main class="directory-layout">
+    <section class="panel directory-intro" aria-labelledby="directory-title">
+      <p class="kicker">GLOBAL WEBMCP SURFACE</p>
+      <h2 id="directory-title">Discover the workspace before acting</h2>
+      <p>
+        An agent can list the declared pages, read each page’s semantic tree,
+        and open only an approved same-origin page. The tree is intentionally
+        curated by the application: it describes visible product regions and
+        WebMCP functions, not raw DOM, selectors, hidden fields, or arbitrary URLs.
+      </p>
+      <div class="manifest-actions" aria-label="WebMCP global functions">
+        <span>list_workspace_pages</span>
+        <span>read_page_tree</span>
+        <span>open_workspace_page</span>
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="plan-title">
-      <div class="panel-heading compact">
-        <div>
-          <p class="kicker">AGENT PREPARATION</p>
-          <h2 id="plan-title">Work plan</h2>
-        </div>
-      </div>
-      <ol id="work-plan" class="empty-state">
-        <li>Ask the agent to create a work plan.</li>
-      </ol>
-    </section>
-
-    <section class="panel" aria-labelledby="message-title">
-      <div class="panel-heading compact">
-        <div>
-          <p class="kicker">DRAFT ONLY</p>
-          <h2 id="message-title">Customer update</h2>
-        </div>
-      </div>
-      <div id="customer-update" class="draft-box empty-text">No customer update prepared yet.</div>
-      <p class="microcopy">Preparing a message never sends it.</p>
-    </section>
-
-    <section class="panel approval-panel" aria-labelledby="approval-title">
-      <div class="panel-heading compact">
-        <div>
-          <p class="kicker">ACTION BOUNDARY</p>
-          <h2 id="approval-title">Human approval</h2>
-        </div>
-        <span id="approval-count" class="counter">0 pending</span>
-      </div>
-      <div id="approval-list" class="approval-list">
-        <div class="empty-card">No sensitive action is waiting for approval.</div>
-      </div>
-    </section>
-
-    <section class="panel history-panel" aria-labelledby="history-title">
-      <div class="panel-heading compact">
-        <div>
-          <p class="kicker">AUDIT TRAIL</p>
-          <h2 id="history-title">Case history</h2>
-        </div>
-      </div>
-      <ul id="history-list" class="history-list"></ul>
-    </section>
+    <section class="directory-grid" id="workspace-page-list" aria-label="Declared workspace pages"></section>
   </main>
 
   <footer>
-    <p><strong>Auralis Operator Desk</strong> · WebMCP demo · Sensitive actions require explicit, single-use human approval.</p>
+    <p><strong>Auralis Workspace</strong> · WebMCP demo · Navigation is limited to declared local pages.</p>
   </footer>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./entradas/directory-app.js"></script>
 </body>
 </html>

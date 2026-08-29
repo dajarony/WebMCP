@@ -2,11 +2,15 @@
 
 ## Project submitted
 
-**Auralis Operator Desk** is the application contained in this repository.
+**Auralis Workspace / Operator Desk** is the application contained in this
+repository.
 
 Its challenge-specific work includes:
 
 - the browser-based shared service-case interface;
+- a multipage workspace directory with a same-origin page manifest;
+- an application-curated semantic tree per declared page;
+- bounded page discovery and page-id navigation tools;
 - WebMCP tool registration with `document.modelContext.registerTool()`;
 - schemas and descriptions for the five site tools;
 - shared human-agent page state;
@@ -36,6 +40,10 @@ The demo separates **preparation** from **authority**:
 7. Replay is rejected.
 
 The agent is never given a WebMCP tool that changes a proposal from `pending` to `approved`.
+
+The agent is also never given a raw DOM, selector, form-control, hidden-state
+or arbitrary-URL primitive. It can discover only product regions and page tools
+selected by the application, and can navigate only to a declared local page.
 
 ## Demo data
 

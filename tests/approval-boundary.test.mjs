@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ApprovalBoundary } from '../approval-boundary.js';
+import { ApprovalBoundary } from '../logica/approval-boundary.js';
+import { ToolErrorCode } from '../contratos/tool-errors.js';
 
 function boundary() {
   let sequence = 0;
@@ -18,7 +19,7 @@ test('pending proposal cannot be applied', () => {
   assert.equal(proposal.status, 'pending');
   assert.throws(
     () => gate.apply(proposal.id),
-    /Human approval is required/
+    (error) => error.code === ToolErrorCode.ACTION_DENIED
   );
 });
 
@@ -33,7 +34,7 @@ test('approved proposal executes exactly once', () => {
   assert.equal(executed.consumed, true);
   assert.throws(
     () => gate.apply(proposal.id),
-    /proposal status is executed|already been consumed/
+    (error) => error.code === ToolErrorCode.ACTION_DENIED
   );
 });
 
@@ -46,7 +47,7 @@ test('rejected proposal cannot be applied', () => {
   assert.equal(proposal.status, 'rejected');
   assert.throws(
     () => gate.apply(proposal.id),
-    /proposal status is rejected/
+    (error) => error.code === ToolErrorCode.ACTION_DENIED
   );
 });
 
@@ -56,13 +57,13 @@ test('approval state cannot be changed twice', () => {
 
   gate.approve(proposal.id);
 
-  assert.throws(() => gate.reject(proposal.id), /cannot be changed from approved/);
-  assert.throws(() => gate.approve(proposal.id), /cannot be changed from approved/);
+  assert.throws(() => gate.reject(proposal.id), (error) => error.code === ToolErrorCode.PROPOSAL_STATE_DENIED);
+  assert.throws(() => gate.approve(proposal.id), (error) => error.code === ToolErrorCode.PROPOSAL_STATE_DENIED);
 });
 
 test('empty action or reason is rejected', () => {
   const gate = boundary();
 
-  assert.throws(() => gate.request('', 'reason'), /Action is required/);
-  assert.throws(() => gate.request('action', '  '), /Reason is required/);
+  assert.throws(() => gate.request('', 'reason'), (error) => error.code === ToolErrorCode.INVALID_PROPOSAL);
+  assert.throws(() => gate.request('action', '  '), (error) => error.code === ToolErrorCode.INVALID_PROPOSAL);
 });

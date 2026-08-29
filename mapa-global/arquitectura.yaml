@@ -1,0 +1,119 @@
+{
+  "system": "auralis-operator-desk-webmcp",
+  "version": "0.3.0",
+  "last_updated": "2026-08-29",
+  "sume_version": "1.0",
+  "routes": [
+    {
+      "path": "/index.html",
+      "method": "browser module load",
+      "entrada": "entradas/directory-app.js",
+      "controlador": "logica/page-manifest.js",
+      "logica": [],
+      "contrato_entrada": "contratos/workspace-page-contracts.js",
+      "contrato_salida": "contratos/tool-errors.js",
+      "salida": "salidas/tool-result-formatter.js"
+    },
+    {
+      "path": "/case.html",
+      "method": "browser module load",
+      "entrada": "entradas/app.js",
+      "controlador": "logica/operator-workspace.js",
+      "logica": ["logica/approval-boundary.js", "logica/page-manifest.js"],
+      "contrato_entrada": "contratos/webmcp-tool-contracts.js",
+      "contrato_salida": "contratos/tool-errors.js",
+      "salida": "salidas/operator-desk-renderer.js"
+    }
+  ],
+  "contracts": [
+    {
+      "name": "WebMCPToolContracts",
+      "file": "contratos/webmcp-tool-contracts.js",
+      "used_by": ["entradas/webmcp-tool-registry.js"]
+    },
+    {
+      "name": "ToolErrors",
+      "file": "contratos/tool-errors.js",
+      "used_by": ["logica/operator-workspace.js", "logica/approval-boundary.js"]
+    },
+    {
+      "name": "WorkspacePageContracts",
+      "file": "contratos/workspace-page-contracts.js",
+      "used_by": ["entradas/directory-app.js", "entradas/workspace-navigation-registry.js", "logica/page-manifest.js"]
+    }
+  ],
+  "modules": [
+    {
+      "name": "page-bootstrap",
+      "type": "Entrada",
+      "file": "entradas/app.js",
+      "depends_on": ["entradas/webmcp-tool-registry.js", "entradas/workspace-navigation-registry.js", "logica/operator-workspace.js", "salidas/operator-desk-renderer.js"]
+    },
+    {
+      "name": "directory-bootstrap",
+      "type": "Entrada",
+      "file": "entradas/directory-app.js",
+      "depends_on": ["entradas/workspace-navigation-registry.js", "contratos/workspace-page-contracts.js"]
+    },
+    {
+      "name": "webmcp-tool-registry",
+      "type": "Entrada",
+      "file": "entradas/webmcp-tool-registry.js",
+      "depends_on": ["contratos/webmcp-tool-contracts.js", "contratos/tool-errors.js", "salidas/tool-result-formatter.js"]
+    },
+    {
+      "name": "workspace-navigation-registry",
+      "type": "Entrada",
+      "file": "entradas/workspace-navigation-registry.js",
+      "depends_on": ["contratos/workspace-page-contracts.js", "contratos/tool-errors.js", "logica/page-manifest.js", "salidas/tool-result-formatter.js"]
+    },
+    {
+      "name": "approval-boundary",
+      "type": "Lógica",
+      "file": "logica/approval-boundary.js",
+      "depends_on": ["contratos/tool-errors.js"]
+    },
+    {
+      "name": "operator-workspace",
+      "type": "Lógica",
+      "file": "logica/operator-workspace.js",
+      "depends_on": ["logica/approval-boundary.js", "contratos/tool-errors.js"]
+    },
+    {
+      "name": "page-manifest",
+      "type": "Lógica",
+      "file": "logica/page-manifest.js",
+      "depends_on": ["contratos/workspace-page-contracts.js"]
+    },
+    {
+      "name": "operator-desk-renderer",
+      "type": "Salida",
+      "file": "salidas/operator-desk-renderer.js",
+      "depends_on": []
+    },
+    {
+      "name": "tool-result-formatter",
+      "type": "Salida",
+      "file": "salidas/tool-result-formatter.js",
+      "depends_on": []
+    },
+    {
+      "name": "tool-errors",
+      "type": "Contrato",
+      "file": "contratos/tool-errors.js",
+      "depends_on": []
+    },
+    {
+      "name": "webmcp-tool-contracts",
+      "type": "Contrato",
+      "file": "contratos/webmcp-tool-contracts.js",
+      "depends_on": []
+    },
+    {
+      "name": "workspace-page-contracts",
+      "type": "Contrato",
+      "file": "contratos/workspace-page-contracts.js",
+      "depends_on": ["contratos/tool-errors.js"]
+    }
+  ]
+}
