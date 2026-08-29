@@ -55,6 +55,35 @@ test('capability tree exposes missing advertised tools as not live', () => {
   assert.equal(tree.globalCapabilities.find((capability) => capability.tool === 'describe_site_capabilities').live, false);
 });
 
+test('capability tree preserves a bounded contextual surface separately from global authority', () => {
+  const tree = composeCapabilityTree({
+    pathname: '/WebMCP/index.html',
+    skeleton: [],
+    liveTools: [{ name: 'read_case_context' }],
+    contextSurface: {
+      revision: 3,
+      selectedComponent: { id: 'condenser_fan', label: 'Condenser fan' },
+      dynamicToolNames: ['read_selected_component', 'prepare_component_diagnostic']
+    }
+  });
+
+  assert.equal(tree.contextualSurface.selectedComponent.id, 'condenser_fan');
+  assert.deepEqual(tree.contextualSurface.dynamicToolNames, ['read_selected_component', 'prepare_component_diagnostic']);
+  assert.equal(tree.globalCapabilities.some((capability) => capability.tool === 'read_selected_component'), false);
+});
+
+test('unexpected observed WebMCP tools remain informational rather than declared authority', () => {
+  const tree = composeCapabilityTree({
+    pathname: '/WebMCP/index.html',
+    skeleton: [],
+    liveTools: [{ name: 'read_case_context' }, { name: 'foreign_same_origin_tool' }]
+  });
+
+  assert.deepEqual(tree.unexpectedObservedToolNames, ['foreign_same_origin_tool']);
+  assert.equal(tree.declaredToolNames.includes('foreign_same_origin_tool'), false);
+  assert.match(tree.observationPolicy, /informational only/);
+});
+
 test('page ids resolve to safe declared navigation targets only', () => {
   assert.equal(resolveCapabilityPage('asset-inspector').href, './asset.html');
   assert.equal(resolveCapabilityPage('https://evil.example'), null);

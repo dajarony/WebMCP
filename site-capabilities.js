@@ -37,7 +37,10 @@ export const SITE_CAPABILITY_MANIFEST = {
         { tool: 'create_work_plan', kind: 'prepare', description: 'Prepare a work plan in the shared workspace.' },
         { tool: 'prepare_customer_update', kind: 'prepare', description: 'Prepare a customer update without sending it.' },
         { tool: 'request_sensitive_action', kind: 'proposal', description: 'Create a sensitive action proposal for human approval.' },
-        { tool: 'apply_approved_action', kind: 'execute', description: 'Apply a proposal only after a single-use human approval.' }
+        { tool: 'apply_approved_action', kind: 'execute', description: 'Apply a proposal only after a single-use human approval.' },
+        { tool: 'list_case_components', kind: 'read', description: 'List declared components available for contextual inspection.' },
+        { tool: 'select_case_component', kind: 'prepare', description: 'Select a declared component and expose its bounded contextual tools.' },
+        { tool: 'clear_case_component_selection', kind: 'prepare', description: 'Clear component context and remove contextual tools.' }
       ]
     },
     {

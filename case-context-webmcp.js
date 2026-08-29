@@ -1,0 +1,132 @@
+const COMPONENTS = Object.freeze([
+  Object.freeze({
+    id: 'condenser_fan',
+    label: 'Condenser fan',
+    summary: 'Intermittent fan noise was reported.'
+  }),
+  Object.freeze({
+    id: 'compressor',
+    label: 'Compressor',
+    summary: 'The compressor is reported as running.'
+  })
+]);
+
+const DYNAMIC_TOOL_NAMES = Object.freeze(['read_selected_component', 'prepare_component_diagnostic']);
+
+function json(value) {
+  return JSON.stringify(value, null, 2);
+}
+
+function componentById(componentId) {
+  return COMPONENTS.find((component) => component.id === componentId) || null;
+}
+
+export class CaseContextWebMCP {
+  constructor({ modelContext, onChange = () => {} }) {
+    this.modelContext = modelContext;
+    this.onChange = onChange;
+    this.selectedComponent = null;
+    this.diagnosticDraft = null;
+    this.revision = 0;
+    this.dynamicController = null;
+    this.toolChangeListener = () => this.#notify();
+  }
+
+  snapshot() {
+    return {
+      revision: this.revision,
+      selectedComponent: this.selectedComponent ? { ...this.selectedComponent } : null,
+      diagnosticDraft: this.diagnosticDraft ? { ...this.diagnosticDraft } : null,
+      dynamicToolNames: this.dynamicController ? [...DYNAMIC_TOOL_NAMES] : []
+    };
+  }
+
+  async register() {
+    await this.#registerTools(this.#staticTools());
+    this.modelContext.addEventListener?.('toolchange', this.toolChangeListener);
+    this.#notify();
+    return ['list_case_components', 'select_case_component', 'clear_case_component_selection'];
+  }
+
+  async select(componentId) {
+    const component = componentById(componentId);
+    if (!component) throw new Error('Unknown case component.');
+    this.selectedComponent = component;
+    this.diagnosticDraft = null;
+    if (!this.dynamicController) {
+      this.dynamicController = new AbortController();
+      await this.#registerTools(this.#dynamicTools(), this.dynamicController.signal);
+    }
+    this.#notify();
+    return this.snapshot();
+  }
+
+  clear() {
+    this.selectedComponent = null;
+    this.diagnosticDraft = null;
+    this.dynamicController?.abort();
+    this.dynamicController = null;
+    this.#notify();
+    return this.snapshot();
+  }
+
+  dispose() {
+    this.modelContext.removeEventListener?.('toolchange', this.toolChangeListener);
+    this.clear();
+  }
+
+  #staticTools() {
+    return [
+      readTool('list_case_components', 'List the declared demo components available for contextual inspection.', () => ({ components: COMPONENTS })),
+      inputTool('select_case_component', 'Select one declared component and expose its contextual tools.', 'component_id', { type: 'string', enum: COMPONENTS.map(({ id }) => id) }, async ({ component_id }) => this.select(component_id)),
+      inputTool('clear_case_component_selection', 'Clear local component context and remove its contextual tools.', null, null, () => this.clear())
+    ];
+  }
+
+  #dynamicTools() {
+    return [
+      readTool('read_selected_component', 'Read the currently selected component. Requires valid component context.', () => {
+        if (!this.selectedComponent) throw new Error('Select a component first.');
+        return { component: this.selectedComponent };
+      }),
+      inputTool('prepare_component_diagnostic', 'Prepare a bounded local diagnostic draft. It is never sent or executed.', 'observation', { type: 'string', minLength: 1, maxLength: 1000 }, ({ observation }) => {
+        if (!this.selectedComponent) throw new Error('Select a component first.');
+        const clean = String(observation).trim();
+        if (!clean) throw new Error('Diagnostic observation cannot be empty.');
+        this.diagnosticDraft = { componentId: this.selectedComponent.id, observation: clean };
+        this.#notify();
+        return { ok: true, sent: false, diagnosticDraft: this.diagnosticDraft };
+      })
+    ];
+  }
+
+  async #registerTools(tools, signal) {
+    for (const tool of tools) await this.modelContext.registerTool(tool, signal ? { signal } : undefined);
+  }
+
+  #notify() {
+    this.revision += 1;
+    this.onChange(this.snapshot());
+  }
+}
+
+function readTool(name, description, execute) {
+  return {
+    name,
+    description,
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
+    execute: async () => json(await execute())
+  };
+}
+
+function inputTool(name, description, field, schema, execute) {
+  const properties = field ? { [field]: schema } : {};
+  return {
+    name,
+    description,
+    inputSchema: { type: 'object', properties, ...(field ? { required: [field] } : {}), additionalProperties: false },
+    annotations: { readOnlyHint: false, untrustedContentHint: true },
+    execute: async (input) => json(await execute(input))
+  };
+}

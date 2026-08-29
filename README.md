@@ -25,6 +25,10 @@ await document.modelContext.registerTool({
 
 The project also uses `document.modelContext.getTools()` to build a live view of what the current document actually exposes.
 
+Observed names are not authority grants. The capability tree keeps the
+application's declared contracts separate from unexpected observed tools, and
+this application never invokes an undeclared observed tool.
+
 No `navigator.modelContext` compatibility layer is used.
 
 ## Multi-page capability model
@@ -86,6 +90,14 @@ Navigates only to page IDs declared in the local site manifest. It does not acce
 | `request_sensitive_action` | Create an approval proposal | Never executes |
 | `apply_approved_action` | Apply an approved proposal | Requires prior human approval; single-use |
 
+### Bounded contextual tools
+
+The Case Workspace can activate a small, declared component context. Selecting
+either `condenser_fan` or `compressor` adds exactly two contextual tools:
+`read_selected_component` and `prepare_component_diagnostic`. Clearing the
+selection removes them through `AbortSignal`; the diagnostic remains a bounded
+local draft and is never sent or executed.
+
 ## Asset Inspector tools
 
 | Tool | Purpose | Side effect |
@@ -122,17 +134,18 @@ There is intentionally **no WebMCP tool that can approve a proposal**.
 
 1. Open **Case Workspace**.
 2. Ask the agent to call `describe_site_capabilities` and discover both pages.
-3. Ask for `read_page_capability_tree`; the agent sees the Case Workspace skeleton plus eight live tools: three global and five local.
-4. Ask the agent to inspect the case, prepare a work plan and draft a customer update.
-5. Ask it to propose a sensitive action.
-6. Try to apply it before approval — the page blocks the action.
-7. Human clicks **Approve**.
-8. Agent applies the approved action once; replay is blocked.
-9. Ask the agent to navigate to `asset-inspector`.
-10. The browser loads `asset.html`; the three global tools return, but the five case tools are replaced by three Asset Inspector tools.
-11. Ask for the capability tree again; the agent sees the inspection form and its fields.
-12. Ask the agent to set an inspection focus and prepare a note in the visible form.
-13. Human reviews and decides whether to submit it.
+3. Ask for `read_page_capability_tree`; the agent sees the Case Workspace skeleton plus its live tools.
+4. Select `condenser_fan`, then re-read the tree to show the two contextual tools; clear the selection to show their removal.
+5. Ask the agent to inspect the case, prepare a work plan and draft a customer update.
+6. Ask it to propose a sensitive action.
+7. Try to apply it before approval — the page blocks the action.
+8. Human clicks **Approve**.
+9. Agent applies the approved action once; replay is blocked.
+10. Ask the agent to navigate to `asset-inspector`.
+11. The browser loads `asset.html`; the three global tools return, but the case tools are replaced by Asset Inspector tools.
+12. Ask for the capability tree again; the agent sees the inspection form and its fields.
+13. Ask the agent to set an inspection focus and prepare a note in the visible form.
+14. Human reviews and decides whether to submit it.
 
 This demonstrates shared context, page-local capability discovery, safe navigation and human control in one coherent WebMCP site.
 
@@ -162,6 +175,7 @@ site-webmcp.js             # stable global multi-page discovery tools
 site-capabilities.js       # site/page capability manifest
 capability-tree.js         # live semantic skeleton + getTools() composition
 approval-boundary.js       # single-use human approval state machine
+case-context-webmcp.js     # bounded contextual case tools and lifecycle
 tests/                     # approval + capability-tree tests
 docs/                      # challenge scope and implementation notes
 ```
@@ -177,6 +191,7 @@ See [`docs/HACKATHON_SCOPE.md`](./docs/HACKATHON_SCOPE.md).
 - No arbitrary URL fetching.
 - Multi-page navigation accepts only manifest-declared page IDs.
 - The semantic tree exposes only application-approved regions, not the raw DOM.
+- Observed WebMCP names are informational; only declared contracts are usable.
 - No shell or filesystem access.
 - No credentials are stored in the repository.
 - Customer updates are drafts only.

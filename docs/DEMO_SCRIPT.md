@@ -15,7 +15,23 @@ Expected WebMCP use:
 
 Visible result: the checklist appears in the same page the human is viewing.
 
-## Scene 2 — Agent prepares, human retains communication control
+## Scene 2 — Context changes the agent surface, not authority
+
+**Prompt**
+
+> Select the condenser fan, re-read the capability tree, and prepare a short
+> diagnostic observation. Do not send or execute anything.
+
+Expected WebMCP use:
+
+1. `select_case_component`
+2. `read_page_capability_tree`
+3. `prepare_component_diagnostic`
+
+Visible result: two contextual tools appear only after a declared selection.
+Clearing the selection removes both and discards the local draft.
+
+## Scene 3 — Agent prepares, human retains communication control
 
 **Prompt**
 
@@ -28,7 +44,7 @@ Expected WebMCP use:
 
 Visible result: a draft appears in the shared page with the explicit note that it has not been sent.
 
-## Scene 3 — Sensitive action boundary
+## Scene 4 — Sensitive action boundary
 
 **Prompt**
 

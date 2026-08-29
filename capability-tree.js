@@ -66,9 +66,17 @@ export async function readLiveWebMCPTools(modelContext = document.modelContext) 
   }));
 }
 
-export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [] }) {
+export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [], contextSurface = null }) {
   const page = currentPageDescriptor(pathname);
   const liveNames = new Set(liveTools.map((tool) => tool.name));
+  const declaredToolNames = [
+    ...SITE_CAPABILITY_MANIFEST.globalCapabilities.map((capability) => capability.tool),
+    ...page.capabilities.map((capability) => capability.tool),
+    ...(contextSurface?.dynamicToolNames || [])
+  ].sort();
+  const unexpectedObservedToolNames = [...liveNames]
+    .filter((name) => !declaredToolNames.includes(name))
+    .sort();
 
   return {
     site: {
@@ -89,6 +97,10 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [] 
       ...capability,
       live: liveNames.has(capability.tool)
     })),
+    contextualSurface: contextSurface,
+    declaredToolNames,
+    unexpectedObservedToolNames,
+    observationPolicy: 'Observed WebMCP names are informational only; this application invokes only its declared contracts.',
     semanticSkeleton: skeleton,
     liveWebMCPTools: liveTools,
     availablePages: SITE_CAPABILITY_MANIFEST.pages.map(({ id, title, href, description }) => ({
@@ -97,10 +109,10 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [] 
   };
 }
 
-export async function buildCapabilityTree({ pathname = globalThis.location?.pathname || '/', root = document } = {}) {
+export async function buildCapabilityTree({ pathname = globalThis.location?.pathname || '/', root = document, contextSurface = null } = {}) {
   const [skeleton, liveTools] = await Promise.all([
     Promise.resolve(readExposedPageSkeleton(root)),
     readLiveWebMCPTools(root.modelContext)
   ]);
-  return composeCapabilityTree({ pathname, skeleton, liveTools });
+  return composeCapabilityTree({ pathname, skeleton, liveTools, contextSurface });
 }

@@ -2,8 +2,10 @@ import { registerWebMCPTools } from './webmcp.js';
 import { ApprovalBoundary } from './approval-boundary.js';
 import { registerSiteWebMCPTools } from './site-webmcp.js';
 import { buildCapabilityTree } from './capability-tree.js';
+import { CaseContextWebMCP } from './case-context-webmcp.js';
 
 const approvalBoundary = new ApprovalBoundary();
+let caseContext = null;
 
 const state = {
   case: {
@@ -30,7 +32,10 @@ const els = {
   approvalList: document.querySelector('#approval-list'),
   approvalCount: document.querySelector('#approval-count'),
   historyList: document.querySelector('#history-list'),
-  capabilityTree: document.querySelector('#capability-tree-preview')
+  capabilityTree: document.querySelector('#capability-tree-preview'),
+  componentSelection: document.querySelector('#component-selection'),
+  componentDiagnostic: document.querySelector('#component-diagnostic'),
+  componentCapabilities: document.querySelector('#component-capabilities')
 };
 
 function nowLabel(timestamp = Date.now()) {
@@ -156,6 +161,18 @@ function renderHistory() {
   }
 }
 
+function renderComponentContext(snapshot) {
+  const selected = snapshot.selectedComponent;
+  els.componentSelection.textContent = selected
+    ? `${selected.label}: ${selected.summary}`
+    : 'No component selected. Contextual tools are unavailable.';
+  els.componentDiagnostic.textContent = snapshot.diagnosticDraft
+    ? `Draft only: ${snapshot.diagnosticDraft.observation}`
+    : 'No component diagnostic prepared.';
+  const names = snapshot.dynamicToolNames.length ? snapshot.dynamicToolNames.join(', ') : 'none';
+  els.componentCapabilities.textContent = `Capability revision ${snapshot.revision}. Dynamic tools: ${names}.`;
+}
+
 function renderAll() {
   renderPlan();
   renderCustomerUpdate();
@@ -164,7 +181,7 @@ function renderAll() {
 }
 
 async function refreshCapabilityTree() {
-  const tree = await buildCapabilityTree();
+  const tree = await buildCapabilityTree({ contextSurface: caseContext?.snapshot() || null });
   if (els.capabilityTree) {
     els.capabilityTree.textContent = JSON.stringify(tree, null, 2);
   }
@@ -251,18 +268,27 @@ els.approvalList.addEventListener('click', (event) => {
 });
 
 renderAll();
+renderComponentContext({ revision: 0, selectedComponent: null, diagnosticDraft: null, dynamicToolNames: [] });
 
 if ('modelContext' in document && document.modelContext) {
   try {
+    caseContext = new CaseContextWebMCP({
+      modelContext: document.modelContext,
+      onChange: (snapshot) => {
+        renderComponentContext(snapshot);
+        refreshCapabilityTree().catch(() => {});
+      }
+    });
     await registerSiteWebMCPTools({
       getCapabilityTree: refreshCapabilityTree,
       navigate: (target) => globalThis.location.assign(target)
     });
     await registerWebMCPTools(operatorApi);
+    await caseContext.register();
 
-    els.webmcpStatus.textContent = '8 WebMCP tools ready';
+    els.webmcpStatus.textContent = '11 WebMCP tools ready';
     els.webmcpStatus.className = 'status status-ready';
-    addHistory('Three global discovery tools and five Case Workspace tools registered.');
+    addHistory('Three global, five case and three contextual tools registered.');
 
     document.modelContext.addEventListener?.('toolchange', () => {
       refreshCapabilityTree().catch(() => {});
