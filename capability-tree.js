@@ -66,7 +66,14 @@ export async function readLiveWebMCPTools(modelContext = document.modelContext) 
   }));
 }
 
-export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [], contextSurface = null }) {
+export function composeCapabilityTree({
+  pathname,
+  skeleton = [],
+  liveTools = [],
+  contextSurface = null,
+  observationStatus = 'observed',
+  observationError = null
+}) {
   const page = currentPageDescriptor(pathname);
   const liveNames = new Set(liveTools.map((tool) => tool.name));
   const contextualCapabilities = page.contextualCapabilities || [];
@@ -106,6 +113,8 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [],
     contextualSurface: contextSurface,
     declaredToolNames,
     unexpectedObservedToolNames,
+    observationStatus,
+    observationError,
     observationPolicy: 'Observed WebMCP names are informational only; this application invokes only its declared contracts.',
     semanticSkeleton: skeleton,
     liveWebMCPTools: liveTools,
@@ -116,9 +125,27 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [],
 }
 
 export async function buildCapabilityTree({ pathname = globalThis.location?.pathname || '/', root = document, contextSurface = null } = {}) {
-  const [skeleton, liveTools] = await Promise.all([
-    Promise.resolve(readExposedPageSkeleton(root)),
-    readLiveWebMCPTools(root.modelContext)
-  ]);
-  return composeCapabilityTree({ pathname, skeleton, liveTools, contextSurface });
+  const skeleton = readExposedPageSkeleton(root);
+  if (!root.modelContext?.getTools) {
+    return composeCapabilityTree({
+      pathname,
+      skeleton,
+      contextSurface,
+      observationStatus: 'unavailable',
+      observationError: 'document.modelContext.getTools is unavailable'
+    });
+  }
+
+  try {
+    const liveTools = await readLiveWebMCPTools(root.modelContext);
+    return composeCapabilityTree({ pathname, skeleton, liveTools, contextSurface });
+  } catch (error) {
+    return composeCapabilityTree({
+      pathname,
+      skeleton,
+      contextSurface,
+      observationStatus: 'unavailable',
+      observationError: String(error?.message || error)
+    });
+  }
 }
