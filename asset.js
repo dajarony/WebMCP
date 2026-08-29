@@ -1,18 +1,10 @@
 import { registerAssetWebMCPTools } from './asset-webmcp.js';
 import { registerSiteWebMCPTools } from './site-webmcp.js';
 import { buildCapabilityTree } from './capability-tree.js';
+import { AssetWorkspaceState } from './asset-workspace.js';
 
+const workspace = new AssetWorkspaceState();
 const state = {
-  asset: {
-    id: 'CR-02',
-    name: 'Walk-in cold room CR-02',
-    location: 'Isla Verde Hotel · Kitchen level',
-    temperatureC: 8.0,
-    condenserFan: 'Intermittent noise',
-    compressor: 'Running'
-  },
-  inspectionFocus: '',
-  preparedNote: '',
   history: [
     { at: Date.now(), text: 'Asset Inspector opened.' }
   ]
@@ -73,30 +65,21 @@ async function refreshCapabilityTree() {
 
 const assetApi = {
   readAssetContext() {
-    return {
-      asset: { ...state.asset },
-      inspectionFocus: state.inspectionFocus || null,
-      preparedNote: state.preparedNote || null,
-      noteIsSaved: false
-    };
+    return workspace.readAssetContext();
   },
 
   setInspectionFocus(focus) {
-    const clean = String(focus).trim().slice(0, 240);
-    if (!clean) throw new Error('Inspection focus cannot be empty.');
-    state.inspectionFocus = clean;
-    els.focus.textContent = clean;
-    addHistory(`Agent set inspection focus: ${clean}`);
-    return { ok: true, focus: clean };
+    const result = workspace.setInspectionFocus(focus);
+    els.focus.textContent = result.focus;
+    addHistory(`Agent set inspection focus: ${result.focus}`);
+    return result;
   },
 
   prepareInspectionNote(note) {
-    const clean = String(note).trim().slice(0, 1200);
-    if (!clean) throw new Error('Inspection note cannot be empty.');
-    state.preparedNote = clean;
-    els.note.value = clean;
+    const result = workspace.prepareInspectionNote(note);
+    els.note.value = result.draft;
     addHistory('Agent prepared an inspection note in the visible form. It has not been saved.');
-    return { ok: true, draft: clean, saved: false };
+    return result;
   }
 };
 
@@ -104,13 +87,13 @@ els.form.addEventListener('submit', (event) => {
   event.preventDefault();
   const clean = els.note.value.trim();
   if (!clean) return;
-  state.preparedNote = clean;
-  addHistory(`Human saved inspection note locally: ${clean.slice(0, 120)}${clean.length > 120 ? '…' : ''}`);
+  const result = workspace.saveInspectionNote(clean);
+  addHistory(`Human saved inspection note locally: ${result.note.slice(0, 120)}${result.note.length > 120 ? '…' : ''}`);
 });
 
 els.form.addEventListener('reset', () => {
   queueMicrotask(() => {
-    state.preparedNote = '';
+    workspace.clearPreparedNote();
     addHistory('Human cleared the inspection note form.');
   });
 });
