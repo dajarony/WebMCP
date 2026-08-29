@@ -11,6 +11,13 @@ function textLabel(element) {
   ).trim().replace(/\s+/g, ' ').slice(0, 180);
 }
 
+function exposedToolNames(element) {
+  return (element.getAttribute('data-agent-tools') || '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
 function describeField(field) {
   return {
     tag: field.tagName.toLowerCase(),
@@ -32,7 +39,8 @@ export function readExposedPageSkeleton(root = document) {
       kind: element.getAttribute('data-capability-kind') || element.tagName.toLowerCase(),
       label: textLabel(element),
       tag: element.tagName.toLowerCase(),
-      humanOnly: element.hasAttribute('data-human-only')
+      humanOnly: element.hasAttribute('data-human-only'),
+      tools: exposedToolNames(element)
     };
 
     if (element.tagName === 'FORM') {
@@ -44,7 +52,7 @@ export function readExposedPageSkeleton(root = document) {
         .filter((control) => control.closest('[data-agent-expose="true"]') === element)
         .map((control) => ({
           ...describeField(control),
-          href: control.tagName === 'A' ? control.getAttribute('href') : null,
+          navigation: control.tagName === 'A' ? 'declared-link' : null,
           humanOnly: control.hasAttribute('data-human-only') || Boolean(control.closest('[data-human-only]'))
         }));
       if (controls.length) node.controls = controls;
@@ -89,7 +97,14 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [] 
       ...capability,
       live: liveNames.has(capability.tool)
     })),
-    semanticSkeleton: skeleton,
+    contextualCapabilities: (page.dynamicCapabilities || []).map((capability) => ({
+      ...capability,
+      live: liveNames.has(capability.tool)
+    })),
+    semanticSkeleton: skeleton.map((node) => ({
+      ...node,
+      liveTools: (node.tools || []).filter((name) => liveNames.has(name))
+    })),
     liveWebMCPTools: liveTools,
     availablePages: SITE_CAPABILITY_MANIFEST.pages.map(({ id, title, href, description }) => ({
       id, title, href, description, current: id === page.id
