@@ -1,4 +1,7 @@
 import { registerWebMCPTools } from './webmcp.js';
+import { ApprovalBoundary } from './approval-boundary.js';
+
+const approvalBoundary = new ApprovalBoundary();
 
 const state = {
   case: {
@@ -12,7 +15,7 @@ const state = {
   },
   workPlan: [],
   customerUpdate: '',
-  proposals: [],
+  proposals: approvalBoundary.proposals,
   history: [
     { at: Date.now(), text: 'Case opened in Auralis Operator Desk.' }
   ]
@@ -38,11 +41,6 @@ function nowLabel(timestamp = Date.now()) {
 function addHistory(text) {
   state.history.unshift({ at: Date.now(), text });
   renderHistory();
-}
-
-function makeId() {
-  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
-  return `proposal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function renderPlan() {
@@ -195,20 +193,7 @@ const operatorApi = {
   },
 
   requestSensitiveAction(action, reason) {
-    const cleanAction = String(action).trim();
-    const cleanReason = String(reason).trim();
-    if (!cleanAction || !cleanReason) throw new Error('Sensitive actions require an action and a reason.');
-
-    const proposal = {
-      id: makeId(),
-      action: cleanAction.slice(0, 180),
-      reason: cleanReason.slice(0, 500),
-      status: 'pending',
-      consumed: false,
-      createdAt: Date.now()
-    };
-
-    state.proposals.unshift(proposal);
+    const proposal = approvalBoundary.request(action, reason);
     renderApprovals();
     addHistory(`Agent requested human approval: ${proposal.action}`);
     return {
@@ -220,14 +205,7 @@ const operatorApi = {
   },
 
   applyApprovedAction(proposalId) {
-    const proposal = state.proposals.find((item) => item.id === proposalId);
-    if (!proposal) throw new Error('Proposal not found.');
-    if (proposal.status !== 'approved') throw new Error(`Action blocked: proposal status is ${proposal.status}. Human approval is required.`);
-    if (proposal.consumed) throw new Error('Action blocked: this approval has already been consumed.');
-
-    proposal.consumed = true;
-    proposal.status = 'executed';
-    proposal.executedAt = Date.now();
+    const proposal = approvalBoundary.apply(proposalId);
     renderApprovals();
     addHistory(`Approved action applied once: ${proposal.action}`);
 
@@ -245,16 +223,14 @@ els.approvalList.addEventListener('click', (event) => {
   const button = event.target.closest('button[data-proposal-id]');
   if (!button) return;
 
-  const proposal = state.proposals.find((item) => item.id === button.dataset.proposalId);
+  const proposal = approvalBoundary.find(button.dataset.proposalId);
   if (!proposal || proposal.status !== 'pending') return;
 
   if (button.dataset.action === 'approve') {
-    proposal.status = 'approved';
-    proposal.approvedAt = Date.now();
+    approvalBoundary.approve(proposal.id);
     addHistory(`Human approved once: ${proposal.action}`);
   } else {
-    proposal.status = 'rejected';
-    proposal.rejectedAt = Date.now();
+    approvalBoundary.reject(proposal.id);
     addHistory(`Human rejected: ${proposal.action}`);
   }
 
