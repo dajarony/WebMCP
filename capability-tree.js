@@ -69,10 +69,11 @@ export async function readLiveWebMCPTools(modelContext = document.modelContext) 
 export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [], contextSurface = null }) {
   const page = currentPageDescriptor(pathname);
   const liveNames = new Set(liveTools.map((tool) => tool.name));
+  const contextualCapabilities = page.contextualCapabilities || [];
   const declaredToolNames = [
     ...SITE_CAPABILITY_MANIFEST.globalCapabilities.map((capability) => capability.tool),
     ...page.capabilities.map((capability) => capability.tool),
-    ...(contextSurface?.dynamicToolNames || [])
+    ...contextualCapabilities.map((capability) => capability.tool)
   ].sort();
   const unexpectedObservedToolNames = [...liveNames]
     .filter((name) => !declaredToolNames.includes(name))
@@ -95,6 +96,11 @@ export function composeCapabilityTree({ pathname, skeleton = [], liveTools = [],
     })),
     pageCapabilities: page.capabilities.map((capability) => ({
       ...capability,
+      live: liveNames.has(capability.tool)
+    })),
+    contextualCapabilities: contextualCapabilities.map((capability) => ({
+      ...capability,
+      active: Boolean(contextSurface?.dynamicToolNames?.includes(capability.tool)),
       live: liveNames.has(capability.tool)
     })),
     contextualSurface: contextSurface,
