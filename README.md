@@ -244,6 +244,8 @@ docs/                       # scope and demo material
 npm test
 ```
 
+Current CI verification: **27/27 tests passing**.
+
 The suite covers approval/replay, page resolution, declared-vs-live capabilities, contextual activation and rollback, asset saved-state semantics, navigation contracts, live-inspection fallback and the multipage **11 → 13 → 11 → 6** integration lifecycle.
 
 ## Scope and provenance
