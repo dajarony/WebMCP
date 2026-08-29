@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Auralis Asset Inspector — page-local WebMCP capabilities inside a multi-page agent workspace." />
+  <meta name="description" content="Auralis Asset Inspector — page-local and contextual WebMCP capabilities inside a multi-page agent workspace." />
   <title>Auralis Asset Inspector</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">WEBMCP CHALLENGE · MULTI-PAGE</p>
       <h1>Auralis Asset Inspector</h1>
-      <p class="subtitle">The site-wide agent map stays stable while this page exposes its own local tools.</p>
+      <p class="subtitle">The page exposes an API-like WebMCP surface that changes with the shared UI state.</p>
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
@@ -22,7 +22,7 @@
   </header>
 
   <main class="layout">
-    <section class="panel case-panel" data-agent-expose="true" data-capability-id="asset-context" data-capability-kind="readable-context" aria-labelledby="asset-title">
+    <section class="panel case-panel" data-agent-expose="true" data-capability-id="asset-context" data-capability-kind="readable-context" data-agent-tools="read_asset_context" aria-labelledby="asset-title">
       <div class="panel-heading">
         <div>
           <p class="kicker">ACTIVE ASSET</p>
@@ -44,7 +44,42 @@
       </div>
     </section>
 
-    <section class="panel" data-agent-expose="true" data-capability-id="inspection-form" data-capability-kind="form" aria-labelledby="inspection-title">
+    <section class="panel" data-agent-expose="true" data-capability-id="component-surface" data-capability-kind="contextual-api" data-agent-tools="select_asset_component,read_selected_component,prepare_component_test" aria-labelledby="component-title">
+      <div class="panel-heading compact">
+        <div>
+          <p class="kicker">CONTEXTUAL AGENT API</p>
+          <h2 id="component-title">Component capabilities</h2>
+        </div>
+        <span id="selected-component-status" class="status status-warn">No component selected</span>
+      </div>
+
+      <form id="component-selection-form">
+        <label class="field-label" for="component-selector">Inspectable component</label>
+        <select id="component-selector" name="component">
+          <option value="">Choose a component…</option>
+          <option value="condenser-fan">Condenser fan</option>
+          <option value="compressor">Compressor</option>
+        </select>
+        <div class="button-row form-actions">
+          <button type="submit" data-human-only>Set component</button>
+        </div>
+      </form>
+
+      <div class="context-box">
+        <p class="label">Live component-specific WebMCP tools</p>
+        <p id="dynamic-tool-list">Select a component to expose contextual capabilities.</p>
+      </div>
+
+      <div class="context-box">
+        <p class="label">Prepared component test</p>
+        <ol id="component-test-plan" class="empty-state">
+          <li>No component test prepared yet.</li>
+        </ol>
+      </div>
+      <p class="microcopy">The agent never receives hidden page functions. Only capabilities explicitly published by the page can become live WebMCP tools.</p>
+    </section>
+
+    <section class="panel" data-agent-expose="true" data-capability-id="inspection-form" data-capability-kind="form" data-agent-tools="set_inspection_focus,prepare_inspection_note" aria-labelledby="inspection-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">SHARED FORM</p>
@@ -52,7 +87,7 @@
         </div>
       </div>
 
-      <form id="inspection-note-form" data-agent-expose="true" data-capability-id="inspection-note-form" data-capability-kind="review-form">
+      <form id="inspection-note-form" data-agent-expose="true" data-capability-id="inspection-note-form" data-capability-kind="review-form" data-agent-tools="prepare_inspection_note">
         <label class="field-label" for="inspection-note">Note prepared by human or agent</label>
         <textarea id="inspection-note" name="inspection_note" rows="7" maxlength="1200" placeholder="Record observations here…"></textarea>
         <div class="button-row form-actions">
@@ -73,7 +108,7 @@
       <ul id="asset-history-list" class="history-list"></ul>
     </section>
 
-    <section class="panel" data-agent-expose="true" data-capability-id="capability-tree" data-capability-kind="agent-introspection" aria-labelledby="capability-tree-title">
+    <section class="panel" data-agent-expose="true" data-capability-id="capability-tree" data-capability-kind="agent-introspection" data-agent-tools="describe_site_capabilities,read_page_capability_tree,navigate_to_capability_page" aria-labelledby="capability-tree-title">
       <div class="panel-heading compact">
         <div>
           <p class="kicker">AGENT VIEW</p>
@@ -86,7 +121,7 @@
   </main>
 
   <footer>
-    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP · Global discovery + page-local capabilities.</p>
+    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP · Global + page-local + contextual capabilities.</p>
   </footer>
 
   <script type="module" src="./asset.js"></script>

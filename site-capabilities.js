@@ -38,18 +38,34 @@ export const SITE_CAPABILITY_MANIFEST = {
         { tool: 'prepare_customer_update', kind: 'prepare', description: 'Prepare a customer update without sending it.' },
         { tool: 'request_sensitive_action', kind: 'proposal', description: 'Create a sensitive action proposal for human approval.' },
         { tool: 'apply_approved_action', kind: 'execute', description: 'Apply a proposal only after a single-use human approval.' }
-      ]
+      ],
+      dynamicCapabilities: []
     },
     {
       id: 'asset-inspector',
       title: 'Asset Inspector',
       href: './asset.html',
       matches: ['/asset.html'],
-      description: 'Asset-focused inspection page with page-specific tools and an agent-readable inspection form.',
+      description: 'Asset-focused inspection page whose WebMCP surface expands when the human or agent selects a component.',
       capabilities: [
         { tool: 'read_asset_context', kind: 'read', description: 'Read current asset telemetry and inspection context.' },
+        { tool: 'select_asset_component', kind: 'state', description: 'Select an inspectable component and unlock its contextual WebMCP capabilities.' },
         { tool: 'set_inspection_focus', kind: 'prepare', description: 'Set the current inspection focus visible to the human.' },
         { tool: 'prepare_inspection_note', kind: 'prepare', description: 'Prepare an inspection note in the page form for human review.' }
+      ],
+      dynamicCapabilities: [
+        {
+          tool: 'read_selected_component',
+          kind: 'read',
+          activation: 'component-selected',
+          description: 'Read detailed context for the component currently selected in the page.'
+        },
+        {
+          tool: 'prepare_component_test',
+          kind: 'prepare',
+          activation: 'component-selected',
+          description: 'Prepare a safe diagnostic checklist for the currently selected component.'
+        }
       ]
     }
   ]
@@ -81,7 +97,8 @@ export function publicSiteManifest(pathname = globalThis.location?.pathname || '
       title: page.title,
       href: page.href,
       description: page.description,
-      advertisedCapabilities: page.capabilities.map((item) => ({ ...item }))
+      advertisedCapabilities: page.capabilities.map((item) => ({ ...item })),
+      contextualCapabilities: (page.dynamicCapabilities || []).map((item) => ({ ...item }))
     }))
   };
 }

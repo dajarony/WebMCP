@@ -6,7 +6,7 @@ export async function registerAssetWebMCPTools(assetApi) {
   const tools = [
     {
       name: 'read_asset_context',
-      description: 'Read the current asset telemetry, inspection focus and prepared inspection note from the Asset Inspector page.',
+      description: 'Read the current asset telemetry, selected component, inspection focus and prepared inspection note from the Asset Inspector page.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -17,6 +17,27 @@ export async function registerAssetWebMCPTools(assetApi) {
         untrustedContentHint: true
       },
       execute: async () => json(assetApi.readAssetContext())
+    },
+    {
+      name: 'select_asset_component',
+      description: 'Select a component inside the shared Asset Inspector. Selecting a component can expose additional component-specific WebMCP capabilities.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          component: {
+            type: 'string',
+            enum: ['condenser-fan', 'compressor'],
+            description: 'Component to inspect.'
+          }
+        },
+        required: ['component'],
+        additionalProperties: false
+      },
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true
+      },
+      execute: async ({ component }) => json(await assetApi.selectAssetComponent(component))
     },
     {
       name: 'set_inspection_focus',
