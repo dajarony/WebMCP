@@ -85,6 +85,10 @@ const assetApi = {
   }
 };
 
+els.note.addEventListener('input', () => {
+  workspace.syncPreparedNote(els.note.value);
+});
+
 els.form.addEventListener('submit', (event) => {
   event.preventDefault();
   const clean = els.note.value.trim();
