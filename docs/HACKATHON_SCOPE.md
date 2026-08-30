@@ -2,7 +2,7 @@
 
 ## Project submitted
 
-**Auralis Operator Desk** is the standalone application contained in this repository.
+**WebMCP Operator Workspace** is the standalone application contained in this repository.
 
 Its challenge-specific work includes:
 

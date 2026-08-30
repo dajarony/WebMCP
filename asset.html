@@ -3,16 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Auralis Asset Inspector — page-local WebMCP capabilities inside a multi-page agent workspace." />
-  <title>Auralis Asset Inspector</title>
+  <meta name="description" content="Asset Inspector — page-local WebMCP capabilities inside a multi-page agent workspace." />
+  <title>WebMCP · Asset Inspector</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">WEBMCP CHALLENGE · MULTI-PAGE</p>
-      <h1>Auralis Asset Inspector</h1>
-      <p class="subtitle">The site-wide agent map stays stable while this page exposes its own local tools.</p>
+    <div class="product-mark">
+      <span class="product-mark-icon" aria-hidden="true">◇</span>
+      <div>
+        <p class="eyebrow">WEBMCP · MULTI-PAGE</p>
+        <h1>Asset Inspector</h1>
+        <p class="subtitle">This document exposes its own bounded inspection tools.</p>
+      </div>
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
@@ -22,6 +25,13 @@
   </header>
 
   <main class="layout">
+    <section class="workspace-intro" aria-labelledby="asset-workspace-heading">
+      <div>
+        <p class="kicker">PAGE-LOCAL CAPABILITIES</p>
+        <h2 id="asset-workspace-heading">A new page, a new capability surface.</h2>
+      </div>
+      <p>The agent can inspect context and prepare the note. Saving the form remains a human-only action.</p>
+    </section>
     <section class="panel case-panel" data-agent-expose="true" data-capability-id="asset-context" data-capability-kind="readable-context" aria-labelledby="asset-title">
       <div class="panel-heading">
         <div>
@@ -86,7 +96,7 @@
   </main>
 
   <footer>
-    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP · Global discovery + page-local capabilities.</p>
+    <p><strong>WebMCP Operator Workspace</strong> · Global discovery + page-local capabilities.</p>
   </footer>
 
   <script type="module" src="./asset.js"></script>

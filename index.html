@@ -3,16 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Auralis Operator Desk — a human-agent collaboration demo built with multi-page WebMCP." />
-  <title>Auralis Operator Desk</title>
+  <meta name="description" content="A human-agent service workspace built with native, multi-page WebMCP capabilities." />
+  <title>WebMCP · Operator Workspace</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <section id="intro-stage" class="intro-stage" aria-label="WebMCP introduction">
+    <video class="intro-video" autoplay muted playsinline preload="auto" aria-hidden="true">
+      <source src="./assets/media/webmcp-intro.mp4" type="video/mp4" />
+    </video>
+    <div class="intro-scrim"></div>
+    <div class="intro-copy">
+      <p class="eyebrow">NATIVE HUMAN–AGENT COLLABORATION</p>
+      <h1>WebMCP makes the workspace legible to both.</h1>
+      <p>Real capabilities. Clear context. Human control for sensitive actions.</p>
+      <button id="enter-workspace" class="intro-enter" type="button">Enter workspace <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
+
   <header class="topbar">
-    <div>
-      <p class="eyebrow">WEBMCP CHALLENGE · 2026</p>
-      <h1>Auralis Operator Desk</h1>
-      <p class="subtitle">Human judgment. Agent speed. One shared multi-page workspace.</p>
+    <div class="product-mark">
+      <span class="product-mark-icon" aria-hidden="true">◇</span>
+      <div>
+        <p class="eyebrow">WEBMCP · LIVE WORKSPACE</p>
+        <h1>Operator Workspace</h1>
+        <p class="subtitle">Contextual capabilities for a shared human–agent workflow.</p>
+      </div>
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
@@ -23,6 +39,13 @@
   </header>
 
   <main class="layout">
+    <section class="workspace-intro" aria-labelledby="workspace-heading">
+      <div>
+        <p class="kicker">ACTIVE WORKSPACE</p>
+        <h2 id="workspace-heading">Resolve the incident, with the right capability at the right moment.</h2>
+      </div>
+      <p>The agent can discover this page, prepare bounded drafts and request an action. A human still approves consequential work.</p>
+    </section>
     <section class="panel case-panel" data-agent-expose="true" data-capability-id="case-context" data-capability-kind="readable-context" aria-labelledby="case-title">
       <div class="panel-heading">
         <div>
@@ -79,7 +102,7 @@
     <section class="panel" data-agent-expose="true" data-capability-id="component-context" data-capability-kind="contextual-agent-surface" aria-labelledby="component-title">
       <div class="panel-heading compact">
         <div>
-          <p class="kicker">CONTEXTUAL AGENT SURFACE</p>
+          <p class="kicker">CONTEXTUAL CAPABILITIES</p>
           <h2 id="component-title">Component context</h2>
         </div>
       </div>
@@ -91,8 +114,8 @@
     <section class="panel approval-panel" data-agent-expose="true" data-capability-id="human-approval" data-capability-kind="human-only-boundary" data-human-only aria-labelledby="approval-title">
       <div class="panel-heading compact">
         <div>
-          <p class="kicker">ACTION BOUNDARY</p>
-          <h2 id="approval-title">Human approval</h2>
+          <p class="kicker">HUMAN CONTROL</p>
+          <h2 id="approval-title">Approval boundary</h2>
         </div>
         <span id="approval-count" class="counter">0 pending</span>
       </div>
@@ -114,7 +137,7 @@
     <section class="panel history-panel" data-agent-expose="true" data-capability-id="capability-tree" data-capability-kind="agent-introspection" aria-labelledby="capability-tree-title">
       <div class="panel-heading compact">
         <div>
-          <p class="kicker">AGENT VIEW</p>
+          <p class="kicker">AGENT-READABLE CONTEXT</p>
           <h2 id="capability-tree-title">Live capability tree</h2>
         </div>
         <span class="status status-ready">global + page</span>
@@ -125,9 +148,10 @@
   </main>
 
   <footer>
-    <p><strong>Auralis Operator Desk</strong> · Multi-page WebMCP demo · Sensitive actions require explicit, single-use human approval.</p>
+    <p><strong>WebMCP Operator Workspace</strong> · Native, multi-page capability discovery · Sensitive actions require explicit, single-use human approval.</p>
   </footer>
 
+  <script type="module" src="./presentation.js"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

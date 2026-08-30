@@ -1,8 +1,8 @@
-# Auralis Operator Desk
+# WebMCP Operator Workspace
 
 **A website should expose its capabilities to an agent instead of forcing the agent to guess the UI.**
 
-Auralis Operator Desk is a WebMCP-native, multi-page service workspace where a human operator and an AI agent work on the same state of the active page. The application exposes an explicit semantic capability surface through WebMCP, while sensitive authority remains with the human.
+WebMCP Operator Workspace is a WebMCP-native, multi-page service workspace where a human operator and an AI agent work on the same state of the active page. The application exposes an explicit semantic capability surface through WebMCP, while sensitive authority remains with the human.
 
 The demo has two pages:
 
@@ -13,7 +13,7 @@ Each navigation creates a new `Document`, so each page re-registers the same glo
 
 ## The core idea
 
-Traditional browser agents often infer intent from screenshots, labels, buttons and selectors. Auralis instead gives the site an explicit agent-facing contract:
+Traditional browser agents often infer intent from screenshots, labels, buttons and selectors. This workspace instead gives the site an explicit agent-facing contract:
 
 ```text
 DISCOVER → UNDERSTAND → INVOKE → NAVIGATE → REDISCOVER
@@ -47,7 +47,7 @@ No `navigator.modelContext` compatibility layer is used.
 ## Capability model
 
 ```text
-Auralis Operator Desk
+WebMCP Operator Workspace
 │
 ├── Global layer · every page · 3 tools
 │   ├── describe_site_capabilities
