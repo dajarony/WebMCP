@@ -6,7 +6,7 @@ WebMCP Operator Workspace is a WebMCP-native, multi-page service workspace where
 
 The demo has two pages:
 
-- **Case Workspace** — case context, planning, drafting, contextual tools and human approval.
+- **Case Workspace** — case context, planning, drafting, contextual tools and Trinidad human approval.
 - **Asset Inspector** — asset telemetry, inspection focus and a human-reviewed note form.
 
 Each navigation creates a new `Document`, so each page re-registers the same global discovery tools plus its own local tools. Demo state is intentionally in-memory and page-local; this project does not claim cross-page persistence.
@@ -21,7 +21,7 @@ DISCOVER → UNDERSTAND → INVOKE → NAVIGATE → REDISCOVER
 
 The agent can ask the site what pages exist, inspect the semantic skeleton of the active page, see which declared WebMCP tools are actually live, invoke those tools directly, and navigate only to declared page IDs.
 
-The application does **not** expose a raw DOM API, arbitrary selectors, arbitrary URLs, hidden fields, a generic JavaScript executor, or an agent tool for human approval.
+The application does **not** expose a raw DOM API, arbitrary selectors, arbitrary URLs, hidden fields, a generic JavaScript executor, or an agent tool for Trinidad human approval.
 
 ## WebMCP primitives used
 
@@ -142,7 +142,7 @@ Selecting a valid component activates two contextual contracts. Registration sta
 
 Clearing the component aborts the contextual registrations and removes the local diagnostic draft.
 
-### Human approval boundary
+### Trinidad human approval boundary
 
 Sensitive work is split into proposal and execution:
 
@@ -161,6 +161,8 @@ executed + approval consumed
 ```
 
 `request_sensitive_action` never executes the action. `apply_approved_action` rejects unknown, pending, rejected and already-consumed proposals. There is intentionally **no WebMCP tool that approves or rejects a proposal**.
+
+For challenge reproducibility, **Trinidad is the in-page human approval boundary in this standalone demo**. It does not require the separate private Universal MCP runtime or a localhost approval service; the human-only boundary is visible to the judge on the submitted page itself.
 
 ## Asset Inspector
 
@@ -219,7 +221,7 @@ site-webmcp.js              # three global discovery/navigation tools
 site-capabilities.js        # page + contextual capability contracts
 capability-tree.js          # semantic tree + live WebMCP observation
 case-context-webmcp.js      # 11 → 13 → 11 contextual lifecycle
-approval-boundary.js        # single-use human approval state machine
+approval-boundary.js        # single-use Trinidad human approval state machine
 tests/                      # unit, ECA and integration coverage
 docs/                       # scope and demo material
 ```
@@ -233,7 +235,7 @@ docs/                       # scope and demo material
 - No network integration, shell, filesystem or credentials.
 - Customer updates and diagnostics are drafts only.
 - The agent cannot submit the Asset Inspector form.
-- Human approval is explicit and single-use.
+- Trinidad human approval is explicit and single-use.
 - Rejected and consumed proposals cannot execute.
 - Contextual tool registration fails closed and is withdrawn with `AbortSignal`.
 - All included case/customer/asset data is fictional demo data.
@@ -244,9 +246,9 @@ docs/                       # scope and demo material
 npm test
 ```
 
-Current CI verification: **27/27 tests passing**.
+Current CI verification: **36/36 tests passing**.
 
-The suite covers approval/replay, page resolution, declared-vs-live capabilities, contextual activation and rollback, asset saved-state semantics, navigation contracts, live-inspection fallback and the multipage **11 → 13 → 11 → 6** integration lifecycle.
+The suite covers approval/replay, page resolution, declared-vs-live capabilities, contextual activation and rollback, activation races, atomic registration rollback, runtime bounds, human/agent asset-state coherence, navigation contracts, live-inspection fallback and the multipage **11 → 13 → 11 → 6** integration lifecycle.
 
 ## Scope and provenance
 
