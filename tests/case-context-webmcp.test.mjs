@@ -171,3 +171,48 @@ test('ECA: clear during activation cannot leave phantom active contextual author
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'read_selected_component'), false);
   assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'prepare_component_diagnostic'), false);
 });
+
+test('ECA: switching component during activation supersedes stale authority without clearing the new context', async () => {
+  let releaseFirstActivation;
+  let delayedOnce = false;
+
+  class SupersededModelContext extends FakeModelContext {
+    async registerTool(tool, options = {}) {
+      if (tool.name === 'prepare_component_diagnostic' && !delayedOnce) {
+        delayedOnce = true;
+        await new Promise((resolve) => { releaseFirstActivation = resolve; });
+        if (options.signal?.aborted) throw options.signal.reason || new Error('registration aborted');
+      }
+      return super.registerTool(tool, options);
+    }
+  }
+
+  const modelContext = new SupersededModelContext();
+  const surface = new CaseContextWebMCP({ modelContext });
+  await surface.register();
+
+  const firstActivation = surface.select('compressor');
+  while (!releaseFirstActivation) await new Promise((resolve) => setImmediate(resolve));
+
+  const secondActivation = surface.select('condenser_fan');
+  await secondActivation;
+  releaseFirstActivation();
+  await assert.rejects(() => firstActivation, /superseded|aborted/i);
+
+  const snapshot = surface.snapshot();
+  assert.equal(snapshot.activationState, 'active');
+  assert.equal(snapshot.selectedComponent.id, 'condenser_fan');
+  assert.deepEqual(snapshot.dynamicToolNames, [
+    'prepare_component_diagnostic',
+    'read_selected_component'
+  ]);
+
+  const dynamicNames = modelContext.tools
+    .map(({ tool }) => tool.name)
+    .filter((name) => ['read_selected_component', 'prepare_component_diagnostic'].includes(name))
+    .sort();
+  assert.deepEqual(dynamicNames, [
+    'prepare_component_diagnostic',
+    'read_selected_component'
+  ]);
+});
