@@ -154,3 +154,13 @@ test('live inspection failure keeps the declared capability tree available', asy
   assert.deepEqual(tree.liveWebMCPTools, []);
   assert.equal(tree.declaredToolNames.includes('read_case_context'), true);
 });
+
+test('unknown file routes do not silently inherit Case Workspace authority', () => {
+  assert.equal(currentPageDescriptor('/WebMCP/not-a-page.html'), null);
+  const manifest = publicSiteManifest('/WebMCP/not-a-page.html');
+  assert.equal(manifest.currentPageId, null);
+  assert.throws(
+    () => composeCapabilityTree({ pathname: '/WebMCP/not-a-page.html', skeleton: [], liveTools: [] }),
+    /Unknown capability page path/
+  );
+});
