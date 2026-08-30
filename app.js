@@ -21,7 +21,7 @@ const state = {
   customerUpdate: '',
   proposals: approvalBoundary.proposals,
   history: [
-    { at: Date.now(), text: 'Case opened in Auralis Operator Desk.' }
+    { at: Date.now(), text: 'Case opened in the Operator Workspace.' }
   ]
 };
 

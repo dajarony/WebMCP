@@ -1,6 +1,6 @@
 export const SITE_CAPABILITY_MANIFEST = {
-  id: 'auralis-operator-desk',
-  title: 'Auralis Operator Desk',
+  id: 'webmcp-operator-workspace',
+  title: 'WebMCP Operator Workspace',
   description: 'A multi-page WebMCP workspace where each page exposes a semantic capability surface to agents while humans retain control of sensitive actions.',
   globalCapabilities: [
     {

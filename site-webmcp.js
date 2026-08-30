@@ -23,7 +23,7 @@ export async function registerSiteWebMCPTools({
   const tools = [
     {
       name: 'describe_site_capabilities',
-      description: 'Describe the Auralis Operator Desk as a multi-page WebMCP site. Returns the global capabilities, declared pages and the tools each page advertises.',
+      description: 'Describe this multi-page WebMCP workspace. Returns the global capabilities, declared pages and the tools each page advertises.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -51,7 +51,7 @@ export async function registerSiteWebMCPTools({
     },
     {
       name: 'navigate_to_capability_page',
-      description: 'Navigate the active browser tab to another page declared by the Auralis site capability map. Use describe_site_capabilities first when the desired page id is unknown.',
+      description: 'Navigate the active browser tab to another page declared by this site capability map. Use describe_site_capabilities first when the desired page id is unknown.',
       inputSchema: {
         type: 'object',
         properties: {

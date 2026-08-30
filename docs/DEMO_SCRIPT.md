@@ -111,7 +111,7 @@ Visible proof:
 
 ## 2:50–3:00 — Closing line
 
-> Auralis turns each page into an explicit, contextual WebMCP capability surface: the agent discovers and uses what the site deliberately exposes, while consequential authority stays with the human.
+> This workspace turns each page into an explicit, contextual WebMCP capability surface: the agent discovers and uses what the site deliberately exposes, while consequential authority stays with the human.
 
 ## Recording rules
 
