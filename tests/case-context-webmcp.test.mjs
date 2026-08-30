@@ -119,3 +119,55 @@ test('ECA: component diagnostic is bounded local state and is cleared with conte
   surface.clear();
   assert.equal(surface.snapshot().diagnosticDraft, null);
 });
+
+test('ECA: component diagnostic enforces the runtime max length', async () => {
+  const modelContext = new FakeModelContext();
+  const surface = new CaseContextWebMCP({ modelContext });
+  await surface.register();
+  await surface.select('compressor');
+  const tool = modelContext.tools.find(({ tool: candidate }) => candidate.name === 'prepare_component_diagnostic').tool;
+
+  await assert.rejects(
+    () => tool.execute({ observation: 'x'.repeat(1001) }),
+    /cannot exceed 1000/
+  );
+  assert.equal(surface.snapshot().diagnosticDraft, null);
+});
+
+test('ECA: static contextual registration rolls back atomically on failure', async () => {
+  const modelContext = new FakeModelContext({ failTool: 'select_case_component' });
+  const surface = new CaseContextWebMCP({ modelContext });
+
+  await assert.rejects(() => surface.register(), /registration failed/);
+  assert.deepEqual(modelContext.tools.map(({ tool }) => tool.name), []);
+});
+
+test('ECA: clear during activation cannot leave phantom active contextual authority', async () => {
+  let releaseSecond;
+  class DelayedModelContext extends FakeModelContext {
+    async registerTool(tool, options = {}) {
+      if (tool.name === 'prepare_component_diagnostic') {
+        await new Promise((resolve) => { releaseSecond = resolve; });
+        if (options.signal?.aborted) throw options.signal.reason || new Error('registration aborted');
+      }
+      return super.registerTool(tool, options);
+    }
+  }
+
+  const modelContext = new DelayedModelContext();
+  const surface = new CaseContextWebMCP({ modelContext });
+  await surface.register();
+  const activation = surface.select('compressor');
+
+  while (!releaseSecond) await new Promise((resolve) => setImmediate(resolve));
+  surface.clear();
+  releaseSecond();
+
+  await assert.rejects(() => activation, /superseded|aborted/i);
+  const snapshot = surface.snapshot();
+  assert.equal(snapshot.activationState, 'inactive');
+  assert.equal(snapshot.selectedComponent, null);
+  assert.deepEqual(snapshot.dynamicToolNames, []);
+  assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'read_selected_component'), false);
+  assert.equal(modelContext.tools.some(({ tool }) => tool.name === 'prepare_component_diagnostic'), false);
+});
