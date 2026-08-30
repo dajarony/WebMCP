@@ -29,6 +29,7 @@ export class CaseContextWebMCP {
     this.dynamicController = null;
     this.dynamicToolNames = new Set();
     this.activationState = 'inactive';
+    this.activationGeneration = 0;
     this.toolChangeListener = () => this.#notify();
   }
 
@@ -43,7 +44,7 @@ export class CaseContextWebMCP {
   }
 
   async register() {
-    await this.#registerTools(this.#staticTools());
+    await this.#registerToolsAtomically(this.#staticTools());
     this.modelContext.addEventListener?.('toolchange', this.toolChangeListener);
     this.#notify();
     return ['list_case_components', 'select_case_component', 'clear_case_component_selection'];
@@ -52,27 +53,46 @@ export class CaseContextWebMCP {
   async select(componentId) {
     const component = componentById(componentId);
     if (!component) throw new Error('Unknown case component.');
+
+    if (this.dynamicController && this.activationState === 'activating') {
+      this.activationGeneration += 1;
+      this.dynamicController.abort();
+      this.dynamicController = null;
+      this.dynamicToolNames.clear();
+      this.activationState = 'inactive';
+    }
+
     this.selectedComponent = component;
     this.diagnosticDraft = null;
 
     if (!this.dynamicController) {
-      this.dynamicController = new AbortController();
+      const generation = ++this.activationGeneration;
+      const controller = new AbortController();
+      this.dynamicController = controller;
       this.activationState = 'activating';
       this.#notify();
       try {
         for (const tool of this.#dynamicTools()) {
-          await this.modelContext.registerTool(tool, { signal: this.dynamicController.signal });
+          await this.modelContext.registerTool(tool, { signal: controller.signal });
+          if (controller.signal.aborted || this.dynamicController !== controller || this.activationGeneration !== generation) {
+            throw new Error('Component activation was superseded.');
+          }
           this.dynamicToolNames.add(tool.name);
           this.#notify();
         }
+        if (controller.signal.aborted || this.dynamicController !== controller || this.activationGeneration !== generation) {
+          throw new Error('Component activation was superseded.');
+        }
         this.activationState = 'active';
       } catch (error) {
-        this.dynamicController.abort();
-        this.dynamicController = null;
-        this.dynamicToolNames.clear();
-        this.activationState = 'inactive';
-        this.selectedComponent = null;
-        this.#notify();
+        controller.abort();
+        if (this.dynamicController === controller && this.activationGeneration === generation) {
+          this.dynamicController = null;
+          this.dynamicToolNames.clear();
+          this.activationState = 'inactive';
+          this.selectedComponent = null;
+          this.#notify();
+        }
         throw error;
       }
     }
@@ -82,6 +102,7 @@ export class CaseContextWebMCP {
   }
 
   clear() {
+    this.activationGeneration += 1;
     this.selectedComponent = null;
     this.diagnosticDraft = null;
     if (this.dynamicController) {
@@ -119,6 +140,7 @@ export class CaseContextWebMCP {
         if (!this.selectedComponent) throw new Error('Select a component first.');
         const clean = String(observation).trim();
         if (!clean) throw new Error('Diagnostic observation cannot be empty.');
+        if (clean.length > 1000) throw new Error('Diagnostic observation cannot exceed 1000 characters.');
         this.diagnosticDraft = { componentId: this.selectedComponent.id, observation: clean };
         this.#notify();
         return { ok: true, sent: false, diagnosticDraft: this.diagnosticDraft };
@@ -126,8 +148,14 @@ export class CaseContextWebMCP {
     ];
   }
 
-  async #registerTools(tools) {
-    for (const tool of tools) await this.modelContext.registerTool(tool);
+  async #registerToolsAtomically(tools) {
+    const controller = new AbortController();
+    try {
+      for (const tool of tools) await this.modelContext.registerTool(tool, { signal: controller.signal });
+    } catch (error) {
+      controller.abort();
+      throw error;
+    }
   }
 
   #notify() {

@@ -75,6 +75,7 @@ export function composeCapabilityTree({
   observationError = null
 }) {
   const page = currentPageDescriptor(pathname);
+  if (!page) throw new Error(`Unknown capability page path: ${pathname}`);
   const liveNames = new Set(liveTools.map((tool) => tool.name));
   const contextualCapabilities = page.contextualCapabilities || [];
   const declaredToolNames = [

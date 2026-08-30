@@ -33,15 +33,24 @@ export class AssetWorkspaceState {
   }
 
   prepareInspectionNote(note) {
-    const clean = String(note).trim().slice(0, 1200);
+    const clean = String(note).trim();
     if (!clean) throw new Error('Inspection note cannot be empty.');
+    if (clean.length > 1200) throw new Error('Inspection note cannot exceed 1200 characters.');
     this.preparedNote = clean;
     return { ok: true, draft: clean, saved: false };
   }
 
+  syncPreparedNote(note) {
+    const value = String(note ?? '');
+    if (value.length > 1200) throw new Error('Inspection note cannot exceed 1200 characters.');
+    this.preparedNote = value;
+    return this.readAssetContext();
+  }
+
   saveInspectionNote(note, savedAt = Date.now()) {
-    const clean = String(note).trim().slice(0, 1200);
+    const clean = String(note).trim();
     if (!clean) throw new Error('Inspection note cannot be empty.');
+    if (clean.length > 1200) throw new Error('Inspection note cannot exceed 1200 characters.');
     this.preparedNote = clean;
     this.savedNote = clean;
     this.savedAt = savedAt;

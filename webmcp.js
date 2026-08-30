@@ -114,8 +114,14 @@ export async function registerWebMCPTools(operatorApi, modelContext = document.m
     }
   ];
 
-  for (const tool of tools) {
-    await modelContext.registerTool(tool);
+  const registrationController = new AbortController();
+  try {
+    for (const tool of tools) {
+      await modelContext.registerTool(tool, { signal: registrationController.signal });
+    }
+  } catch (error) {
+    registrationController.abort();
+    throw error;
   }
 
   return tools.map((tool) => tool.name);

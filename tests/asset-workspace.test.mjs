@@ -44,3 +44,21 @@ test('clearing the form clears only the current draft, not saved history', () =>
   assert.equal(context.lastSavedNote, 'Saved observation.');
   assert.equal(context.noteIsSaved, false);
 });
+
+test('human typing synchronizes the current draft without marking it saved', () => {
+  const workspace = new AssetWorkspaceState();
+  workspace.saveInspectionNote('Saved observation.', 1234);
+  workspace.syncPreparedNote('Human unsaved revision.');
+
+  const context = workspace.readAssetContext();
+  assert.equal(context.preparedNote, 'Human unsaved revision.');
+  assert.equal(context.lastSavedNote, 'Saved observation.');
+  assert.equal(context.noteIsSaved, false);
+});
+
+test('inspection note runtime state rejects content beyond the declared bound', () => {
+  const workspace = new AssetWorkspaceState();
+  assert.throws(() => workspace.prepareInspectionNote('x'.repeat(1201)), /cannot exceed 1200/);
+  assert.throws(() => workspace.syncPreparedNote('x'.repeat(1201)), /cannot exceed 1200/);
+  assert.throws(() => workspace.saveInspectionNote('x'.repeat(1201)), /cannot exceed 1200/);
+});

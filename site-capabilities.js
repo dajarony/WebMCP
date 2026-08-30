@@ -80,9 +80,13 @@ function normalizePath(pathname) {
 
 export function currentPageDescriptor(pathname = globalThis.location?.pathname || '/') {
   const normalized = normalizePath(pathname);
-  return SITE_CAPABILITY_MANIFEST.pages.find((page) =>
-    page.matches.some((match) => normalized === match || normalized.endsWith(match))
-  ) || SITE_CAPABILITY_MANIFEST.pages[0];
+  const matched = SITE_CAPABILITY_MANIFEST.pages.find((page) =>
+    page.matches.some((match) => {
+      if (match === '/') return normalized === '/' || normalized.endsWith('/');
+      return normalized === match || normalized.endsWith(match);
+    })
+  );
+  return matched || null;
 }
 
 export function publicSiteManifest(pathname = globalThis.location?.pathname || '/') {
@@ -91,7 +95,7 @@ export function publicSiteManifest(pathname = globalThis.location?.pathname || '
     id: SITE_CAPABILITY_MANIFEST.id,
     title: SITE_CAPABILITY_MANIFEST.title,
     description: SITE_CAPABILITY_MANIFEST.description,
-    currentPageId: current.id,
+    currentPageId: current?.id || null,
     globalCapabilities: SITE_CAPABILITY_MANIFEST.globalCapabilities.map((item) => ({ ...item })),
     pages: SITE_CAPABILITY_MANIFEST.pages.map((page) => ({
       id: page.id,

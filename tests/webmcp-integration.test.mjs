@@ -7,12 +7,14 @@ import { registerAssetWebMCPTools } from '../asset-webmcp.js';
 import { CaseContextWebMCP } from '../case-context-webmcp.js';
 
 class FakeModelContext {
-  constructor() {
+  constructor({ failTool = null } = {}) {
     this.entries = [];
     this.listeners = new Set();
+    this.failTool = failTool;
   }
 
   async registerTool(tool, options = {}) {
+    if (tool.name === this.failTool) throw new Error(`registration failed: ${tool.name}`);
     const entry = { tool };
     this.entries.push(entry);
     options.signal?.addEventListener('abort', () => {
@@ -117,4 +119,25 @@ test('site navigation accepts only declared page ids and keeps the URL internal'
     () => modelContext.tool('navigate_to_capability_page').execute({ page_id: 'https://evil.example' }),
     /Unknown capability page/
   );
+});
+
+test('ECA: global WebMCP registration rolls back atomically on partial failure', async () => {
+  const modelContext = new FakeModelContext({ failTool: 'read_page_capability_tree' });
+  await assert.rejects(
+    () => registerGlobal(modelContext, 'https://example.test/WebMCP/index.html'),
+    /registration failed/
+  );
+  assert.deepEqual((await modelContext.getTools()).map(({ name }) => name), []);
+});
+
+test('ECA: case WebMCP registration rolls back atomically on partial failure', async () => {
+  const modelContext = new FakeModelContext({ failTool: 'prepare_customer_update' });
+  await assert.rejects(() => registerWebMCPTools(operatorApi, modelContext), /registration failed/);
+  assert.deepEqual((await modelContext.getTools()).map(({ name }) => name), []);
+});
+
+test('ECA: asset WebMCP registration rolls back atomically on partial failure', async () => {
+  const modelContext = new FakeModelContext({ failTool: 'prepare_inspection_note' });
+  await assert.rejects(() => registerAssetWebMCPTools(assetApi, modelContext), /registration failed/);
+  assert.deepEqual((await modelContext.getTools()).map(({ name }) => name), []);
 });

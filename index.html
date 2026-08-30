@@ -32,7 +32,7 @@
     </div>
     <div class="status-cluster">
       <span id="webmcp-status" class="status status-warn">Checking WebMCP…</span>
-      <span class="status status-safe">Human approval enabled</span>
+      <span class="status status-safe">Trinidad ready</span>
       <a class="nav-pill active" href="./index.html">Case Workspace</a>
       <a class="nav-pill" href="./asset.html">Asset Inspector</a>
     </div>
@@ -111,16 +111,16 @@
       <p id="component-capabilities" class="microcopy">Capability revision 0. Dynamic tools: none.</p>
     </section>
 
-    <section class="panel approval-panel" data-agent-expose="true" data-capability-id="human-approval" data-capability-kind="human-only-boundary" data-human-only aria-labelledby="approval-title">
+    <section id="trinidad-boundary" class="panel approval-panel trinidad-boundary" data-agent-expose="true" data-capability-id="human-approval" data-capability-kind="human-only-boundary" data-human-only aria-live="polite" aria-labelledby="approval-title">
       <div class="panel-heading compact">
         <div>
-          <p class="kicker">HUMAN CONTROL</p>
-          <h2 id="approval-title">Approval boundary</h2>
+          <p class="kicker">TRINIDAD · HUMAN CONTROL</p>
+          <h2 id="approval-title">Trinidad approval boundary</h2>
         </div>
         <span id="approval-count" class="counter">0 pending</span>
       </div>
       <div id="approval-list" class="approval-list">
-        <div class="empty-card">No sensitive action is waiting for approval.</div>
+        <div class="empty-card">Trinidad is ready. No sensitive action is waiting for approval.</div>
       </div>
     </section>
 
@@ -148,7 +148,7 @@
   </main>
 
   <footer>
-    <p><strong>WebMCP Operator Workspace</strong> · Native, multi-page capability discovery · Sensitive actions require explicit, single-use human approval.</p>
+    <p><strong>WebMCP Operator Workspace</strong> · Native, multi-page capability discovery · Sensitive actions cross the Trinidad boundary and require explicit, single-use human approval.</p>
   </footer>
 
   <script type="module" src="./presentation.js"></script>
