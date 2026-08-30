@@ -31,6 +31,7 @@ const els = {
   customerUpdate: document.querySelector('#customer-update'),
   approvalList: document.querySelector('#approval-list'),
   approvalCount: document.querySelector('#approval-count'),
+  trinidadBoundary: document.querySelector('#trinidad-boundary'),
   historyList: document.querySelector('#history-list'),
   capabilityTree: document.querySelector('#capability-tree-preview'),
   componentSelection: document.querySelector('#component-selection'),
@@ -84,6 +85,15 @@ function statusLabel(proposal) {
   return proposal.status;
 }
 
+function revealTrinidad() {
+  if (!els.trinidadBoundary) return;
+  els.trinidadBoundary.classList.remove('trinidad-pulse');
+  requestAnimationFrame(() => {
+    els.trinidadBoundary.classList.add('trinidad-pulse');
+    els.trinidadBoundary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
 function renderApprovals() {
   els.approvalList.replaceChildren();
   const pending = state.proposals.filter((item) => item.status === 'pending').length;
@@ -92,7 +102,7 @@ function renderApprovals() {
   if (!state.proposals.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-card';
-    empty.textContent = 'No sensitive action is waiting for approval.';
+    empty.textContent = 'Trinidad is ready. No sensitive action is waiting for approval.';
     els.approvalList.append(empty);
     return;
   }
@@ -203,12 +213,17 @@ const operatorApi = {
   },
 
   createWorkPlan(steps) {
-    const cleanSteps = steps
-      .map((step) => String(step).trim())
-      .filter(Boolean)
-      .slice(0, 8);
+    if (!Array.isArray(steps) || steps.length < 1 || steps.length > 8) {
+      throw new Error('A work plan requires between 1 and 8 steps.');
+    }
+    const cleanSteps = steps.map((step) => {
+      if (typeof step !== 'string') throw new Error('Each work-plan step must be text.');
+      const clean = step.trim();
+      if (!clean) throw new Error('Work-plan steps cannot be empty.');
+      if (clean.length > 240) throw new Error('Work-plan steps cannot exceed 240 characters.');
+      return clean;
+    });
 
-    if (!cleanSteps.length) throw new Error('A work plan requires at least one non-empty step.');
     state.workPlan = cleanSteps;
     renderPlan();
     addHistory(`Agent prepared a ${cleanSteps.length}-step work plan.`);
@@ -227,7 +242,8 @@ const operatorApi = {
   requestSensitiveAction(action, reason) {
     const proposal = approvalBoundary.request(action, reason);
     renderApprovals();
-    addHistory(`Agent requested human approval: ${proposal.action}`);
+    revealTrinidad();
+    addHistory(`Trinidad received an agent proposal for human approval: ${proposal.action}`);
     return {
       ok: true,
       proposalId: proposal.id,
@@ -260,10 +276,10 @@ els.approvalList.addEventListener('click', (event) => {
 
   if (button.dataset.action === 'approve') {
     approvalBoundary.approve(proposal.id);
-    addHistory(`Human approved once: ${proposal.action}`);
+    addHistory(`Human approved once through Trinidad: ${proposal.action}`);
   } else {
     approvalBoundary.reject(proposal.id);
-    addHistory(`Human rejected: ${proposal.action}`);
+    addHistory(`Human rejected through Trinidad: ${proposal.action}`);
   }
 
   renderApprovals();
