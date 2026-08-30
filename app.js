@@ -3,6 +3,7 @@ import { ApprovalBoundary } from './approval-boundary.js';
 import { registerSiteWebMCPTools } from './site-webmcp.js';
 import { buildCapabilityTree } from './capability-tree.js';
 import { CaseContextWebMCP } from './case-context-webmcp.js';
+import { normalizeWorkPlanSteps } from './case-workspace-state.js';
 
 const approvalBoundary = new ApprovalBoundary();
 let caseContext = null;
@@ -213,16 +214,7 @@ const operatorApi = {
   },
 
   createWorkPlan(steps) {
-    if (!Array.isArray(steps) || steps.length < 1 || steps.length > 8) {
-      throw new Error('A work plan requires between 1 and 8 steps.');
-    }
-    const cleanSteps = steps.map((step) => {
-      if (typeof step !== 'string') throw new Error('Each work-plan step must be text.');
-      const clean = step.trim();
-      if (!clean) throw new Error('Work-plan steps cannot be empty.');
-      if (clean.length > 240) throw new Error('Work-plan steps cannot exceed 240 characters.');
-      return clean;
-    });
+    const cleanSteps = normalizeWorkPlanSteps(steps);
 
     state.workPlan = cleanSteps;
     renderPlan();
