@@ -9,6 +9,14 @@ function requireText(value, label, maxLength) {
   return clean.slice(0, maxLength);
 }
 
+export class BusinessRuleError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'BusinessRuleError';
+    this.code = code;
+  }
+}
+
 export class ApprovalBoundary {
   constructor({ idFactory = defaultIdFactory, clock = () => Date.now() } = {}) {
     this.idFactory = idFactory;
@@ -50,11 +58,21 @@ export class ApprovalBoundary {
 
   apply(proposalId) {
     const proposal = this.find(proposalId);
-    if (!proposal) throw new Error('Proposal not found.');
-    if (proposal.status !== 'approved') {
-      throw new Error(`Action blocked: proposal status is ${proposal.status}. Human approval is required.`);
+    if (!proposal) {
+      throw new BusinessRuleError('PROPOSAL_NOT_FOUND', 'Proposal not found.');
     }
-    if (proposal.consumed) throw new Error('Action blocked: this approval has already been consumed.');
+    if (proposal.consumed) {
+      throw new BusinessRuleError(
+        'PROPOSAL_ALREADY_CONSUMED',
+        'Action blocked: this approval has already been consumed.'
+      );
+    }
+    if (proposal.status !== 'approved') {
+      throw new BusinessRuleError(
+        'PROPOSAL_NOT_APPROVED',
+        `Action blocked: proposal status is ${proposal.status}. Human approval is required.`
+      );
+    }
 
     proposal.consumed = true;
     proposal.status = 'executed';
@@ -64,9 +82,14 @@ export class ApprovalBoundary {
 
   #requirePending(proposalId) {
     const proposal = this.find(proposalId);
-    if (!proposal) throw new Error('Proposal not found.');
+    if (!proposal) {
+      throw new BusinessRuleError('PROPOSAL_NOT_FOUND', 'Proposal not found.');
+    }
     if (proposal.status !== 'pending') {
-      throw new Error(`Proposal cannot be changed from ${proposal.status}.`);
+      throw new BusinessRuleError(
+        'PROPOSAL_NOT_PENDING',
+        `Proposal cannot be changed from ${proposal.status}.`
+      );
     }
     return proposal;
   }
