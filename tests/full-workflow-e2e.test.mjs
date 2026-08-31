@@ -57,6 +57,16 @@ async function registerGlobal(modelContext, baseHref, navigate = () => {}) {
   });
 }
 
+function assertBusinessRejection(result, code) {
+  assert.deepEqual(result, {
+    ok: false,
+    error: {
+      kind: 'business_rejection',
+      code
+    }
+  });
+}
+
 test('ECA E2E: complete human-agent workflow crosses context, Trinidad and Asset Inspector safely', async () => {
   let idSequence = 0;
   let clock = 1000;
@@ -147,7 +157,7 @@ test('ECA E2E: complete human-agent workflow crosses context, Trinidad and Asset
   assert.equal(context.snapshot().activationState, 'inactive');
   assert.equal(caseModel.tool('prepare_component_diagnostic'), null);
 
-  // Sensitive work crosses Trinidad. Pending execution is blocked.
+  // Sensitive work crosses Trinidad. Pending execution is blocked with a typed business rejection.
   const requested = JSON.parse(await caseModel.tool('request_sensitive_action').execute({
     action: 'Schedule technician visit',
     reason: 'This commits staff time and requires human approval.'
@@ -155,26 +165,29 @@ test('ECA E2E: complete human-agent workflow crosses context, Trinidad and Asset
   assert.equal(requested.status, 'pending');
   assert.equal(approvalBoundary.find(requested.proposalId).status, 'pending');
 
-  await assert.rejects(
-    () => caseModel.tool('apply_approved_action').execute({ proposal_id: requested.proposalId }),
-    /Human approval is required/
-  );
+  const pendingApply = JSON.parse(await caseModel.tool('apply_approved_action').execute({
+    proposal_id: requested.proposalId
+  }));
+  assertBusinessRejection(pendingApply, 'PROPOSAL_NOT_APPROVED');
+  assert.equal(approvalBoundary.find(requested.proposalId).consumed, false);
 
   // Human-only action: direct boundary approval, never an agent tool.
   approvalBoundary.approve(requested.proposalId);
   assert.equal(approvalBoundary.find(requested.proposalId).status, 'approved');
 
-  // Agent may now execute exactly once; replay is blocked.
+  // Agent may now execute exactly once; replay is a typed consumed rejection.
   const applied = JSON.parse(await caseModel.tool('apply_approved_action').execute({
     proposal_id: requested.proposalId
   }));
   assert.equal(applied.status, 'executed');
   assert.equal(applied.approvalConsumed, true);
 
-  await assert.rejects(
-    () => caseModel.tool('apply_approved_action').execute({ proposal_id: requested.proposalId }),
-    /status is executed|already been consumed/
-  );
+  const replay = JSON.parse(await caseModel.tool('apply_approved_action').execute({
+    proposal_id: requested.proposalId
+  }));
+  assertBusinessRejection(replay, 'PROPOSAL_ALREADY_CONSUMED');
+  assert.equal(approvalBoundary.find(requested.proposalId).status, 'executed');
+  assert.equal(approvalBoundary.find(requested.proposalId).consumed, true);
 
   // Agent navigates only through the declared same-origin page id.
   const navigation = JSON.parse(await caseModel.tool('navigate_to_capability_page').execute({
