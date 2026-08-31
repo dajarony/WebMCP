@@ -2,6 +2,24 @@ function json(value) {
   return JSON.stringify(value, null, 2);
 }
 
+const SAFE_BUSINESS_REJECTION_CODES = new Set([
+  'PROPOSAL_NOT_FOUND',
+  'PROPOSAL_NOT_APPROVED',
+  'PROPOSAL_ALREADY_CONSUMED'
+]);
+
+function businessRejectionResult(error) {
+  const code = error?.code;
+  if (!SAFE_BUSINESS_REJECTION_CODES.has(code)) throw error;
+  return json({
+    ok: false,
+    error: {
+      kind: 'business_rejection',
+      code
+    }
+  });
+}
+
 export async function registerWebMCPTools(operatorApi, modelContext = document.modelContext) {
   const tools = [
     {
@@ -110,7 +128,13 @@ export async function registerWebMCPTools(operatorApi, modelContext = document.m
         readOnlyHint: false,
         untrustedContentHint: true
       },
-      execute: async ({ proposal_id }) => json(operatorApi.applyApprovedAction(proposal_id))
+      execute: async ({ proposal_id }) => {
+        try {
+          return json(operatorApi.applyApprovedAction(proposal_id));
+        } catch (error) {
+          return businessRejectionResult(error);
+        }
+      }
     }
   ];
 
