@@ -133,16 +133,14 @@ function renderApprovals() {
       const approve = document.createElement('button');
       approve.className = 'approve';
       approve.textContent = 'Approve';
-      approve.dataset.action = 'approve';
-      approve.dataset.proposalId = proposal.id;
       approve.dataset.humanOnly = 'true';
+      approve.addEventListener('click', () => decideProposal(proposal.id, 'approve'));
 
       const reject = document.createElement('button');
       reject.className = 'reject';
       reject.textContent = 'Reject';
-      reject.dataset.action = 'reject';
-      reject.dataset.proposalId = proposal.id;
       reject.dataset.humanOnly = 'true';
+      reject.addEventListener('click', () => decideProposal(proposal.id, 'reject'));
 
       buttons.append(approve, reject);
     }
@@ -238,7 +236,7 @@ const operatorApi = {
     addHistory(`Trinidad received an agent proposal for human approval: ${proposal.action}`);
     return {
       ok: true,
-      proposalId: proposal.id,
+      proposal_id: proposal.id,
       status: proposal.status,
       message: 'Proposal created. A human must approve it in the page before it can be applied.'
     };
@@ -251,7 +249,7 @@ const operatorApi = {
 
     return {
       ok: true,
-      proposalId: proposal.id,
+      proposal_id: proposal.id,
       status: proposal.status,
       approvalConsumed: true,
       result: `Applied approved action: ${proposal.action}`
@@ -259,14 +257,11 @@ const operatorApi = {
   }
 };
 
-els.approvalList.addEventListener('click', (event) => {
-  const button = event.target.closest('button[data-proposal-id]');
-  if (!button) return;
-
-  const proposal = approvalBoundary.find(button.dataset.proposalId);
+function decideProposal(proposalId, decision) {
+  const proposal = approvalBoundary.find(proposalId);
   if (!proposal || proposal.status !== 'pending') return;
 
-  if (button.dataset.action === 'approve') {
+  if (decision === 'approve') {
     approvalBoundary.approve(proposal.id);
     addHistory(`Human approved once through Trinidad: ${proposal.action}`);
   } else {
@@ -275,7 +270,7 @@ els.approvalList.addEventListener('click', (event) => {
   }
 
   renderApprovals();
-});
+}
 
 renderAll();
 renderComponentContext({ revision: 0, activationState: 'inactive', selectedComponent: null, diagnosticDraft: null, dynamicToolNames: [] });

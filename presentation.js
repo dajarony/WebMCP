@@ -1,13 +1,13 @@
 /**
  * WebMCP Operator Workspace · presentation lifecycle
  *
- * Purpose: dismiss the visual introduction without altering any WebMCP
- * capability, shared case state, approval state, or page authority.
+ * Purpose: dismiss the visual introduction only after an explicit human
+ * decision, without altering any WebMCP capability, shared case state,
+ * approval state, or page authority.
  */
 
 const intro = document.querySelector('#intro-stage');
 const enterButton = document.querySelector('#enter-workspace');
-const introVideo = intro?.querySelector('video');
 
 function dismissIntro() {
   if (!intro || intro.dataset.dismissed === 'true') return;
@@ -16,9 +16,3 @@ function dismissIntro() {
 }
 
 enterButton?.addEventListener('click', dismissIntro);
-introVideo?.addEventListener('ended', dismissIntro);
-introVideo?.addEventListener('error', dismissIntro);
-
-if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-  dismissIntro();
-}

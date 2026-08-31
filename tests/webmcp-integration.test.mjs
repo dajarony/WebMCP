@@ -50,7 +50,7 @@ const operatorApi = {
   createWorkPlan: (steps) => ({ ok: true, steps }),
   prepareCustomerUpdate: (message) => ({ ok: true, draft: message, sent: false }),
   requestSensitiveAction: (action, reason) => ({ ok: true, action, reason, status: 'pending' }),
-  applyApprovedAction: (proposalId) => ({ ok: true, proposalId })
+  applyApprovedAction: (proposalId) => ({ ok: true, proposal_id: proposalId })
 };
 
 const assetApi = {
@@ -140,4 +140,30 @@ test('ECA: asset WebMCP registration rolls back atomically on partial failure', 
   const modelContext = new FakeModelContext({ failTool: 'prepare_inspection_note' });
   await assert.rejects(() => registerAssetWebMCPTools(assetApi, modelContext), /registration failed/);
   assert.deepEqual((await modelContext.getTools()).map(({ name }) => name), []);
+});
+
+test('ECA: sensitive-action proposal ids use the same proposal_id contract for request and apply', async () => {
+  const modelContext = new FakeModelContext();
+  let appliedId = null;
+  const api = {
+    ...operatorApi,
+    requestSensitiveAction: () => ({ ok: true, proposal_id: 'proposal-eca-1', status: 'pending' }),
+    applyApprovedAction: (proposalId) => {
+      appliedId = proposalId;
+      return { ok: true, proposal_id: proposalId, status: 'executed', approvalConsumed: true };
+    }
+  };
+
+  await registerWebMCPTools(api, modelContext);
+  const proposal = JSON.parse(await modelContext.tool('request_sensitive_action').execute({
+    action: 'Local test action',
+    reason: 'Contract regression.'
+  }));
+  assert.equal(proposal.proposal_id, 'proposal-eca-1');
+
+  const applied = JSON.parse(await modelContext.tool('apply_approved_action').execute({
+    proposal_id: proposal.proposal_id
+  }));
+  assert.equal(appliedId, 'proposal-eca-1');
+  assert.equal(applied.proposal_id, 'proposal-eca-1');
 });
