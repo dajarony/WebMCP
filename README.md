@@ -2,26 +2,86 @@
 
 **A website should expose its capabilities to an agent instead of forcing the agent to guess the UI.**
 
-WebMCP Operator Workspace is a WebMCP-native, multi-page service workspace where a human operator and an AI agent work on the same state of the active page. The application exposes an explicit semantic capability surface through WebMCP, while sensitive authority remains with the human.
+WebMCP Operator Workspace is a standalone WebMCP-native, multi-page service workspace where a human operator and an AI agent share the state of the active page while sensitive authority remains human-controlled.
 
-The demo has two pages:
+## Judge quick start
+
+This repository is designed to prove visible behavior, not just tool discovery.
+
+Use the submitted live app in a WebMCP-capable browser/client and ask the agent to use the page tools. A compact end-to-end run is:
+
+```text
+Case Workspace: 11 live tools
+        ↓
+select_case_component({ component_id: "condenser_fan" })
+        ↓
+13 live tools + visible component context
+        ↓
+prepare_component_diagnostic(...)
+        ↓
+clear_case_component_selection({})
+        ↓
+11 live tools
+        ↓
+request_sensitive_action({ action, reason })
+        ↓
+proposal is pending; execution is blocked
+        ↓
+HUMAN ONLY: approve in Trinidad
+        ↓
+apply_approved_action({ proposal_id })
+        ↓
+executed once + approval consumed
+        ↓
+replay is rejected
+        ↓
+navigate_to_capability_page({ page_id: "asset-inspector" })
+        ↓
+new Document: 6 live tools
+```
+
+What to watch on screen:
+
+- the live WebMCP count changes **11 → 13 → 11 → 6**;
+- component selection changes the visible workspace and the actual tool catalog;
+- Trinidad visibly separates proposal from human authority;
+- the approved action records one execution and consumes approval;
+- replay cannot create a second execution;
+- navigation creates a new document with the Asset Inspector tool surface;
+- an inspection note can be prepared by the agent but only saved by the human.
+
+A useful judge prompt is:
+
+> Inspect the active WebMCP capabilities. Select the condenser fan, read the selected component, prepare a short diagnostic observation, then clear the component. Create a sensitive proposal explaining what you want to apply, but do not claim it executed before I approve it in Trinidad. After I approve, apply it once and show that replay is rejected. Then navigate to Asset Inspector and describe the new WebMCP surface.
+
+## Why this is different
+
+The demo is not a fixed list of agent shortcuts. It demonstrates a **context-sensitive capability surface** and a separate **human authority boundary**:
+
+```text
+DISCOVER → UNDERSTAND → INVOKE → CONTEXT CHANGES → REDISCOVER
+                                ↓
+                         HUMAN AUTHORITY
+                                ↓
+                         EXECUTE ONCE
+```
+
+The site publishes semantic capabilities directly through WebMCP instead of requiring an agent to infer every action from screenshots, labels, selectors or DOM structure. Contextual tools appear only when their application context exists, disappear when it is cleared, and are re-registered per document after navigation.
+
+The application also distinguishes **capability discovery from authority**. Seeing a tool never grants permission to approve a sensitive proposal. Trinidad approval is human-only and single-use.
+
+## Separate interoperability validation
+
+The challenge submission is **this public repository and its standalone app**. A separate proprietary Universal MCP/WebMCP client is outside the submitted codebase and is not required to run or judge this project.
+
+As additional compatibility evidence, that separate runtime has been exercised against public third-party WebMCP demos without service-specific integrations. In one external test it discovered an unfamiliar `query` capability, passed invocation through Trinidad, executed it through `document.modelContext.executeTool`, and the external application visibly changed its own state: status filter `500`, grouping `Status Code`, visualization `Table`, and a reduced result set. This is interoperability evidence only; it is not presented as code contained in this repository.
+
+## The two-page demo
 
 - **Case Workspace** — case context, planning, drafting, contextual tools and Trinidad human approval.
 - **Asset Inspector** — asset telemetry, inspection focus and a human-reviewed note form.
 
 Each navigation creates a new `Document`, so each page re-registers the same global discovery tools plus its own local tools. Demo state is intentionally in-memory and page-local; this project does not claim cross-page persistence.
-
-## The core idea
-
-Traditional browser agents often infer intent from screenshots, labels, buttons and selectors. This workspace instead gives the site an explicit agent-facing contract:
-
-```text
-DISCOVER → UNDERSTAND → INVOKE → NAVIGATE → REDISCOVER
-```
-
-The agent can ask the site what pages exist, inspect the semantic skeleton of the active page, see which declared WebMCP tools are actually live, invoke those tools directly, and navigate only to declared page IDs.
-
-The application does **not** expose a raw DOM API, arbitrary selectors, arbitrary URLs, hidden fields, a generic JavaScript executor, or an agent tool for Trinidad human approval.
 
 ## WebMCP primitives used
 
@@ -164,6 +224,8 @@ executed + approval consumed
 
 For challenge reproducibility, **Trinidad is the in-page human approval boundary in this standalone demo**. It does not require the separate private Universal MCP runtime or a localhost approval service; the human-only boundary is visible to the judge on the submitted page itself.
 
+Known proposal-lifecycle rejections are returned through a small typed result contract; unexpected execution failures are not mislabeled as business rejections.
+
 ## Asset Inspector
 
 The Asset Inspector exposes six tools total: three global plus three local.
@@ -185,8 +247,8 @@ The recommended demo proves the architecture through visible behavior rather tha
 
 1. Discover the site and show **11 live tools** on Case Workspace.
 2. Select `condenser_fan`; show the live surface reach **13**, prepare a local diagnostic, then clear and return to **11**.
-3. Prepare a concise work plan or customer draft.
-4. Create a sensitive proposal, prove execution is blocked before approval, let the human approve, execute once, then prove replay is blocked.
+3. Create a sensitive proposal and prove execution is blocked before approval.
+4. Let the human approve in Trinidad, execute once, then prove replay is blocked.
 5. Navigate by page ID to Asset Inspector; show the new document exposing **6 tools** and prepare an inspection note for human review.
 
 See [`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md).
@@ -246,13 +308,13 @@ docs/                       # scope and demo material
 npm test
 ```
 
-Current CI verification: **36/36 tests passing**.
+Current CI verification: **49/49 tests passing**.
 
-The suite covers approval/replay, page resolution, declared-vs-live capabilities, contextual activation and rollback, activation races, atomic registration rollback, runtime bounds, human/agent asset-state coherence, navigation contracts, live-inspection fallback and the multipage **11 → 13 → 11 → 6** integration lifecycle.
+The suite covers approval/replay, typed business rejection, page resolution, declared-vs-live capabilities, contextual activation and rollback, activation races, atomic registration rollback, runtime bounds, human/agent asset-state coherence, navigation contracts, live-inspection fallback and the multipage **11 → 13 → 11 → 6** integration lifecycle.
 
 ## Scope and provenance
 
-This repository is a standalone WebMCP application created for the 2026 WebMCP Challenge. It does not contain or disclose the implementation of a separate proprietary orchestration system. The demo does not depend on that system.
+This repository is the standalone WebMCP application submitted for the 2026 WebMCP Challenge. It does not contain or disclose the implementation of the separate proprietary orchestration/runtime used for broader compatibility testing, and the demo does not depend on that system.
 
 See [`docs/HACKATHON_SCOPE.md`](./docs/HACKATHON_SCOPE.md).
 
