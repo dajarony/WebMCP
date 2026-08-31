@@ -52,6 +52,16 @@ function buildOperatorApi(gate) {
   };
 }
 
+function assertBusinessRejection(result, code) {
+  assert.deepEqual(result, {
+    ok: false,
+    error: {
+      kind: 'business_rejection',
+      code
+    }
+  });
+}
+
 test('ECA: Trinidad exposes request/apply to the agent but never approve/reject', async () => {
   let sequence = 0;
   const gate = new ApprovalBoundary({ idFactory: () => `proposal-${++sequence}` });
@@ -83,10 +93,11 @@ test('ECA: Trinidad requires human approval, consumes it once, and blocks replay
   }));
   assert.equal(requested.status, 'pending');
 
-  await assert.rejects(
-    () => modelContext.tool('apply_approved_action').execute({ proposal_id: requested.proposalId }),
-    /Human approval is required/
-  );
+  const beforeApproval = JSON.parse(await modelContext.tool('apply_approved_action').execute({
+    proposal_id: requested.proposalId
+  }));
+  assertBusinessRejection(beforeApproval, 'PROPOSAL_NOT_APPROVED');
+  assert.equal(gate.find(requested.proposalId).consumed, false);
 
   gate.approve(requested.proposalId); // human-side action; intentionally not exposed as WebMCP.
 
@@ -96,10 +107,12 @@ test('ECA: Trinidad requires human approval, consumes it once, and blocks replay
   assert.equal(executed.status, 'executed');
   assert.equal(executed.approvalConsumed, true);
 
-  await assert.rejects(
-    () => modelContext.tool('apply_approved_action').execute({ proposal_id: requested.proposalId }),
-    /proposal status is executed|already been consumed/
-  );
+  const replay = JSON.parse(await modelContext.tool('apply_approved_action').execute({
+    proposal_id: requested.proposalId
+  }));
+  assertBusinessRejection(replay, 'PROPOSAL_ALREADY_CONSUMED');
+  assert.equal(gate.find(requested.proposalId).status, 'executed');
+  assert.equal(gate.find(requested.proposalId).consumed, true);
 });
 
 test('ECA: Trinidad rejection permanently blocks agent execution', async () => {
@@ -115,8 +128,10 @@ test('ECA: Trinidad rejection permanently blocks agent execution', async () => {
 
   gate.reject(requested.proposalId); // human-side action; intentionally not exposed as WebMCP.
 
-  await assert.rejects(
-    () => modelContext.tool('apply_approved_action').execute({ proposal_id: requested.proposalId }),
-    /proposal status is rejected/
-  );
+  const rejected = JSON.parse(await modelContext.tool('apply_approved_action').execute({
+    proposal_id: requested.proposalId
+  }));
+  assertBusinessRejection(rejected, 'PROPOSAL_NOT_APPROVED');
+  assert.equal(gate.find(requested.proposalId).status, 'rejected');
+  assert.equal(gate.find(requested.proposalId).consumed, false);
 });
