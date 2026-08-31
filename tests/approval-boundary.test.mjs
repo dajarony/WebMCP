@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ApprovalBoundary } from '../approval-boundary.js';
+import { ApprovalBoundary, BusinessRuleError } from '../approval-boundary.js';
 
 function boundary() {
   let sequence = 0;
@@ -31,10 +31,16 @@ test('approved proposal executes exactly once', () => {
 
   assert.equal(executed.status, 'executed');
   assert.equal(executed.consumed, true);
-  assert.throws(
-    () => gate.apply(proposal.id),
-    /proposal status is executed|already been consumed/
-  );
+
+  let replayError = null;
+  try {
+    gate.apply(proposal.id);
+  } catch (error) {
+    replayError = error;
+  }
+  assert.ok(replayError instanceof BusinessRuleError);
+  assert.equal(replayError.code, 'PROPOSAL_ALREADY_CONSUMED');
+  assert.match(replayError.message, /already been consumed/);
 });
 
 test('rejected proposal cannot be applied', () => {
